@@ -16,6 +16,7 @@ import {
   UserCheck,
   TrendingUp
 } from "lucide-react";
+import Dock, { DockItemData } from "../components/Dock";
 
 type Tab = "board" | "ai-insights" | "team-load" | "digest" | "github";
 
@@ -29,6 +30,43 @@ export default function Home() {
     acceptAssignment,
     isConnected
   } = useRealtimeBoard(defaultBoardId);
+
+  const dockItems: DockItemData[] = [
+    {
+      icon: <Trello className={`w-5 h-5 transition-colors ${activeTab === "board" ? "text-indigo-400" : "text-slate-400"}`} />,
+      label: "Kanban Board",
+      onClick: () => setActiveTab("board")
+    },
+    {
+      icon: (
+        <div className="relative">
+          <BrainCircuit className={`w-5 h-5 transition-colors ${activeTab === "ai-insights" ? "text-indigo-400" : "text-slate-400"}`} />
+          {aiInsights.assignmentSuggestions.length > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 py-0.5 leading-none rounded-full">
+              {aiInsights.assignmentSuggestions.length}
+            </span>
+          )}
+        </div>
+      ),
+      label: "AI Insights",
+      onClick: () => setActiveTab("ai-insights")
+    },
+    {
+      icon: <Users className={`w-5 h-5 transition-colors ${activeTab === "team-load" ? "text-indigo-400" : "text-slate-400"}`} />,
+      label: "Team Load",
+      onClick: () => setActiveTab("team-load")
+    },
+    {
+      icon: <FileText className={`w-5 h-5 transition-colors ${activeTab === "digest" ? "text-indigo-400" : "text-slate-400"}`} />,
+      label: "Weekly Digest",
+      onClick: () => setActiveTab("digest")
+    },
+    {
+      icon: <Github className={`w-5 h-5 transition-colors ${activeTab === "github" ? "text-indigo-400" : "text-slate-400"}`} />,
+      label: "GitHub Importer",
+      onClick: () => setActiveTab("github")
+    }
+  ];
 
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditMessage, setAuditMessage] = useState("");
@@ -159,110 +197,45 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-indigo-600 rounded-lg text-white">
-              <Trello className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-extrabold text-lg leading-tight tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                CollabPM
-              </h1>
-              <span className="text-[10px] text-indigo-400 font-bold tracking-wider uppercase">
-                AI Powered CRDT Board
-              </span>
-            </div>
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      {/* Top Header */}
+      <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur flex items-center justify-between px-8 shrink-0 select-none">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-600 rounded-lg text-white">
+            <Trello className="w-5 h-5" />
           </div>
-
-          <nav className="space-y-1">
-            <button
-              onClick={() => setActiveTab("board")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeTab === "board"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`}
-            >
-              <Trello className="w-4 h-4" />
-              Kanban Board
-            </button>
-
-            <button
-              onClick={() => setActiveTab("ai-insights")}
-              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeTab === "ai-insights"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <BrainCircuit className="w-4 h-4" />
-                AI Insights
-              </span>
-              {aiInsights.assignmentSuggestions.length > 0 && (
-                <span className="bg-amber-500 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">
-                  {aiInsights.assignmentSuggestions.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab("team-load")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeTab === "team-load"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              Team Load
-            </button>
-
-            <button
-              onClick={() => setActiveTab("digest")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeTab === "digest"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              Weekly Digest
-            </button>
-
-            <button
-              onClick={() => setActiveTab("github")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeTab === "github"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`}
-            >
-              <Github className="w-4 h-4" />
-              GitHub Importer
-            </button>
-          </nav>
+          <div>
+            <h1 className="font-extrabold text-md leading-tight tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+              CollabPM
+            </h1>
+            <span className="text-[9px] text-indigo-400 font-bold tracking-wider uppercase">
+              AI Powered CRDT Board
+            </span>
+          </div>
         </div>
 
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-350 text-xs">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+            <span className="text-xs font-semibold text-slate-400">
+              {isConnected ? "Connected" : "Disconnected"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-lg shadow-inner">
+            <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-xs">
               AI
             </div>
             <div>
-              <div className="text-xs font-bold text-white">Gemini 2.5 Flash</div>
-              <div className="text-[10px] text-slate-500">Active Audit Agent</div>
+              <div className="text-[10px] font-bold text-white leading-tight">Gemini 2.5 Flash</div>
+              <div className="text-[8px] text-slate-500">Active Audit Agent</div>
             </div>
           </div>
         </div>
-      </aside>
+      </header>
 
       {/* Main Dashboard Content */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+      <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 pb-28">
         {activeTab === "board" && (
           <KanbanBoard boardId={defaultBoardId} />
         )}
@@ -285,7 +258,7 @@ export default function Home() {
                 <button
                   onClick={triggerAudit}
                   disabled={auditLoading || !isConnected}
-                  className="flex items-center gap-2 px-4.5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg transition"
+                  className="flex items-center gap-2 px-4.5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg transition cursor-pointer"
                 >
                   <Play className="w-4 h-4" />
                   {auditLoading ? "Auditing Board..." : "Trigger AI Board Audit"}
@@ -382,7 +355,7 @@ export default function Home() {
                       </div>
                       <button
                         onClick={() => acceptAssignment(sug.cardId, sug.suggestedAssigneeId)}
-                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-md transition flex items-center gap-1.5 justify-center"
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-md transition flex items-center gap-1.5 justify-center cursor-pointer"
                       >
                         <Check className="w-4 h-4" /> Accept Assignment
                       </button>
@@ -474,7 +447,7 @@ export default function Home() {
               <button 
                 type="submit"
                 disabled={githubLoading}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-850 disabled:text-slate-500 text-white text-xs font-bold rounded-lg transition"
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-850 disabled:text-slate-500 text-white text-xs font-bold rounded-lg transition cursor-pointer"
               >
                 {githubLoading ? "Importing Issues..." : "Import Repository Issues"}
               </button>
@@ -486,6 +459,9 @@ export default function Home() {
             </form>
           </div>
         )}
+
+        {/* Floating Bottom Navigation Dock */}
+        <Dock items={dockItems} />
       </main>
     </div>
   );
