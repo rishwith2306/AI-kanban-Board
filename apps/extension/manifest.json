@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "CollabPM Clipper",
+  "version": "1.0.0",
+  "description": "Clip web content and text directly into CollabPM Kanban cards.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:4000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
