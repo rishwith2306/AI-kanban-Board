@@ -121,7 +121,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
         {/* Presence Indicators */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-400 mr-2">
-            Playing as: <span className="font-mono text-indigo-400 font-semibold">{userName}</span>
+            Playing as: <span className="font-mono text-zinc-400 font-semibold">{userName}</span>
           </span>
           <div className="flex -space-x-1.5 overflow-hidden">
             {collaborators.map((c) => (
@@ -161,7 +161,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={`flex-1 overflow-y-auto p-3 space-y-3 min-h-[50px] transition-colors ${
-                      snapshot.isDraggingOver ? "bg-indigo-950/20" : ""
+                      snapshot.isDraggingOver ? "bg-zinc-800/10" : ""
                     }`}
                   >
                     {list.cards.map((card, index) => (
@@ -172,8 +172,8 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             onClick={() => setSelectedCard({ card, listId: list.id })}
-                            className={`p-4 rounded-lg border border-slate-800 bg-slate-900 hover:border-indigo-500/50 hover:bg-slate-900/80 transition-all cursor-grab active:cursor-grabbing shadow-sm flex flex-col gap-2 ${
-                              snapshot.isDragging ? "shadow-2xl border-indigo-500 rotate-1 bg-slate-850" : ""
+                            className={`p-4 rounded-lg border border-slate-800 bg-slate-900 hover:border-zinc-500/50 hover:bg-slate-900/80 transition-all cursor-grab active:cursor-grabbing shadow-sm flex flex-col gap-2 ${
+                              snapshot.isDragging ? "shadow-2xl border-zinc-400 rotate-1 bg-slate-850" : ""
                             }`}
                           >
                             <div className="flex justify-between items-start gap-2">
@@ -193,7 +193,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                             {(card.dueDate || card.aiComplexityEstimate || card.aiTags?.length > 0) && (
                               <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-800/40">
                                 {card.aiComplexityEstimate && (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-500/10 text-zinc-300 border border-zinc-500/20">
                                     {card.aiComplexityEstimate}
                                   </span>
                                 )}
@@ -209,7 +209,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                                 {card.aiTags?.map((tag, idx) => (
                                   <span
                                     key={idx}
-                                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-950 text-indigo-300"
+                                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-950 text-zinc-350"
                                   >
                                     #{tag}
                                   </span>
@@ -240,7 +240,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                         if (e.key === "Enter") handleAddCard(list.id);
                         if (e.key === "Escape") setAddingCardToList(null);
                       }}
-                      className="w-full text-xs bg-slate-950 text-white border border-slate-850 rounded p-2 focus:outline-none focus:border-indigo-500"
+                      className="w-full text-xs bg-slate-950 text-white border border-slate-850 rounded p-2 focus:outline-none focus:border-zinc-400"
                       autoFocus
                     />
                     <div className="flex gap-2 justify-end">
@@ -252,7 +252,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                       </button>
                       <button
                         onClick={() => handleAddCard(list.id)}
-                        className="p-1 px-3 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium transition"
+                        className="p-1 px-3 text-xs bg-zinc-200 hover:bg-white text-black rounded font-medium transition"
                       >
                         Add Card
                       </button>
@@ -281,7 +281,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
             placeholder="Add new list..."
             value={newListVal}
             onChange={(e) => setNewListVal(e.target.value)}
-            className="w-full bg-slate-950 text-slate-200 border border-slate-850 rounded-lg p-2.5 text-sm focus:outline-none focus:border-indigo-500"
+            className="w-full bg-slate-950 text-slate-200 border border-slate-850 rounded-lg p-2.5 text-sm focus:outline-none focus:border-zinc-400"
           />
           <button
             type="submit"
@@ -306,7 +306,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
             <div className="space-y-6">
               {/* Editable Title */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                   Task Title
                 </label>
                 <input
@@ -316,7 +316,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                     updateCardField(selectedCard.listId, selectedCard.card.id, "title", e.target.value);
                     setSelectedCard((prev) => prev ? { ...prev, card: { ...prev.card, title: e.target.value } } : null);
                   }}
-                  className="w-full bg-transparent text-lg font-bold text-white border-b border-transparent hover:border-slate-800 focus:border-indigo-500 focus:outline-none pb-1"
+                  className="w-full bg-transparent text-lg font-bold text-white border-b border-transparent hover:border-slate-800 focus:border-zinc-400 focus:outline-none pb-1"
                 />
               </div>
 
@@ -334,14 +334,14 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                   }}
                   placeholder="Add a detailed description for this task..."
                   rows={4}
-                  className="w-full bg-slate-950 text-slate-200 border border-slate-850 rounded-lg p-3 text-sm focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+                  className="w-full bg-slate-950 text-slate-200 border border-slate-850 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-400 resize-none leading-relaxed"
                 />
               </div>
 
               {/* AI Assistant Tags Panel */}
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800/60">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                     <User className="w-3 h-3" />
                     Complexity Score
                   </div>
@@ -350,7 +350,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                     <Calendar className="w-3 h-3" />
                     Due Date
                   </div>

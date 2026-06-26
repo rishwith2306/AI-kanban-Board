@@ -151,7 +151,7 @@ export default function Home() {
         return <h1 key={idx} className="text-2xl font-extrabold text-white mt-6 mb-3 border-b border-slate-800 pb-2">{line.slice(2)}</h1>;
       }
       if (line.startsWith("## ")) {
-        return <h2 key={idx} className="text-xl font-bold text-indigo-400 mt-5 mb-2.5">{line.slice(3)}</h2>;
+        return <h2 key={idx} className="text-xl font-bold text-zinc-400 mt-5 mb-2.5">{line.slice(3)}</h2>;
       }
       if (line.startsWith("### ")) {
         return <h3 key={idx} className="text-lg font-semibold text-slate-200 mt-4 mb-2">{line.slice(4)}</h3>;
@@ -231,14 +231,14 @@ export default function Home() {
 
   const dockItems: DockItemData[] = [
     {
-      icon: <Trello className={`w-5 h-5 transition-colors ${activeTab === "board" ? "text-indigo-400" : "text-slate-400"}`} />,
+      icon: <Trello className={`w-5 h-5 transition-colors ${activeTab === "board" ? "text-zinc-300" : "text-slate-400"}`} />,
       label: "Kanban Board",
       onClick: () => setActiveTab("board")
     },
     {
       icon: (
         <div className="relative">
-          <BrainCircuit className={`w-5 h-5 transition-colors ${activeTab === "ai-insights" ? "text-indigo-400" : "text-slate-400"}`} />
+          <BrainCircuit className={`w-5 h-5 transition-colors ${activeTab === "ai-insights" ? "text-zinc-300" : "text-slate-400"}`} />
           {aiInsights.assignmentSuggestions.length > 0 && (
             <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 py-0.5 leading-none rounded-full">
               {aiInsights.assignmentSuggestions.length}
@@ -250,17 +250,17 @@ export default function Home() {
       onClick: () => setActiveTab("ai-insights")
     },
     {
-      icon: <Users className={`w-5 h-5 transition-colors ${activeTab === "team-load" ? "text-indigo-400" : "text-slate-400"}`} />,
+      icon: <Users className={`w-5 h-5 transition-colors ${activeTab === "team-load" ? "text-zinc-300" : "text-slate-400"}`} />,
       label: "Team Load",
       onClick: () => setActiveTab("team-load")
     },
     {
-      icon: <FileText className={`w-5 h-5 transition-colors ${activeTab === "digest" ? "text-indigo-400" : "text-slate-400"}`} />,
+      icon: <FileText className={`w-5 h-5 transition-colors ${activeTab === "digest" ? "text-zinc-300" : "text-slate-400"}`} />,
       label: "Weekly Digest",
       onClick: () => setActiveTab("digest")
     },
     {
-      icon: <Github className={`w-5 h-5 transition-colors ${activeTab === "github" ? "text-indigo-400" : "text-slate-400"}`} />,
+      icon: <Github className={`w-5 h-5 transition-colors ${activeTab === "github" ? "text-zinc-300" : "text-slate-400"}`} />,
       label: "GitHub Importer",
       onClick: () => setActiveTab("github")
     }
@@ -270,22 +270,22 @@ export default function Home() {
     return (
       <div className="h-screen w-screen bg-slate-950 flex items-center justify-center text-slate-400 font-sans">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <div className="text-sm font-semibold tracking-wider uppercase text-indigo-400">Loading CollabPM...</div>
+          <div className="w-8 h-8 border-4 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+          <div className="text-sm font-semibold tracking-wider uppercase text-zinc-300">Loading CollabPM...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <ClickSpark sparkColor='#6366f1' sparkSize={15} sparkRadius={20} sparkCount={10} duration={500}>
+    <ClickSpark sparkColor='#cbd5e1' sparkSize={15} sparkRadius={20} sparkCount={10} duration={500}>
       {user === null ? (
         // LANDING & LOGIN/SIGNUP STATE
         <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans relative">
           {/* Light Rays Background */}
           <LightRays
             raysOrigin="top-center"
-            raysColor="#6366f1"
+            raysColor="#cbd5e1"
             raysSpeed={1.2}
             lightSpread={0.7}
             rayLength={1.5}
@@ -302,7 +302,7 @@ export default function Home() {
               items={pillNavItems}
               baseColor="#030712"
               pillColor="#1f2937"
-              hoveredPillTextColor="#6366f1"
+              hoveredPillTextColor="#ffffff"
               pillTextColor="#f8fafc"
               initialLoadAnimation={true}
             />
@@ -314,7 +314,7 @@ export default function Home() {
               <div className="max-w-3xl mx-auto text-center px-6 space-y-6">
                 <h1 className="text-4xl sm:text-6xl font-black leading-tight tracking-tight text-white select-none">
                   AI-Powered Real-time{" "}
-                  <span className="bg-gradient-to-r from-indigo-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">
                     Collaborative Board
                   </span>
                 </h1>
@@ -324,7 +324,7 @@ export default function Home() {
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                   <button
                     onClick={() => setActiveTab("signup")}
-                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 cursor-pointer"
+                    className="px-6 py-3 bg-zinc-200 hover:bg-white text-black text-xs font-bold uppercase tracking-wider rounded-lg transition shadow-lg shadow-zinc-200/10 flex items-center gap-1.5 cursor-pointer"
                   >
                     Get Started <ArrowRight className="w-4 h-4" />
                   </button>
@@ -349,7 +349,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full">
                   <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3 backdrop-blur-sm">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-500/10 text-zinc-300 flex items-center justify-center font-bold">
                       <Trello className="w-4 h-4" />
                     </div>
                     <h3 className="font-bold text-white text-sm">Real-time CRDT Engine</h3>
@@ -359,7 +359,7 @@ export default function Home() {
                   </div>
 
                   <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3 backdrop-blur-sm">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-500/10 text-zinc-300 flex items-center justify-center font-bold">
                       <BrainCircuit className="w-4 h-4" />
                     </div>
                     <h3 className="font-bold text-white text-sm">Gemini Audit Agent</h3>
@@ -369,7 +369,7 @@ export default function Home() {
                   </div>
 
                   <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3 backdrop-blur-sm">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-500/10 text-zinc-300 flex items-center justify-center font-bold">
                       <Users className="w-4 h-4" />
                     </div>
                     <h3 className="font-bold text-white text-sm">Workload Balancer</h3>
@@ -381,7 +381,7 @@ export default function Home() {
 
                 <button
                   onClick={() => setActiveTab("signup")}
-                  className="mt-10 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-600/20 cursor-pointer flex items-center gap-1.5"
+                  className="mt-10 px-6 py-2.5 bg-zinc-200 hover:bg-white text-black text-xs font-bold rounded-lg transition shadow-lg shadow-zinc-200/10 cursor-pointer flex items-center gap-1.5"
                 >
                   Get Started Now <ArrowRight className="w-4 h-4" />
                 </button>
@@ -406,7 +406,7 @@ export default function Home() {
                           value={loginName}
                           onChange={(e) => setLoginName(e.target.value)}
                           placeholder="Your Full Name"
-                          className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-indigo-500"
+                          className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                         />
                       </div>
                       <div className="relative">
@@ -417,14 +417,14 @@ export default function Home() {
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           placeholder="Email Address"
-                          className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-indigo-500"
+                          className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                         />
                       </div>
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-600/20 cursor-pointer flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 bg-zinc-200 hover:bg-white text-black text-xs font-bold rounded-lg transition shadow-lg shadow-zinc-200/10 cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <Lock className="w-3.5 h-3.5" /> Sign In
                     </button>
@@ -435,7 +435,7 @@ export default function Home() {
                       New to CollabPM?{" "}
                       <button
                         onClick={() => setActiveTab("signup")}
-                        className="text-indigo-400 hover:underline cursor-pointer font-bold bg-transparent border-none p-0"
+                        className="text-zinc-300 hover:text-white hover:underline cursor-pointer font-bold bg-transparent border-none p-0"
                       >
                         Create an account
                       </button>
@@ -483,7 +483,7 @@ export default function Home() {
                               value={signupName}
                               onChange={(e) => setSignupName(e.target.value)}
                               placeholder="Your Full Name (e.g. Alice Chen)"
-                              className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-indigo-500"
+                              className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                             />
                           </div>
                           <div className="relative">
@@ -494,7 +494,7 @@ export default function Home() {
                               value={signupEmail}
                               onChange={(e) => setSignupEmail(e.target.value)}
                               placeholder="Your Email Address"
-                              className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-indigo-500"
+                              className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                             />
                           </div>
                         </div>
@@ -513,7 +513,7 @@ export default function Home() {
                               onClick={() => setSignupRole(r)}
                               className={`p-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition cursor-pointer ${
                                 signupRole === r
-                                  ? "bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/20"
+                                  ? "bg-zinc-200 border-zinc-300 text-black shadow-md shadow-zinc-200/10"
                                   : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900/60"
                               }`}
                             >
@@ -530,7 +530,7 @@ export default function Home() {
                         <p className="text-xs text-slate-400 leading-relaxed">
                           All settings have been configured:
                         </p>
-                        <div className="bg-slate-950/80 rounded-lg p-3 border border-slate-850 space-y-1.5 font-mono text-[10px] text-indigo-400">
+                        <div className="bg-slate-950/80 rounded-lg p-3 border border-slate-850 space-y-1.5 font-mono text-[10px] text-zinc-300">
                           <div>Name: <span className="text-slate-350">{signupName}</span></div>
                           <div>Email: <span className="text-slate-350">{signupEmail}</span></div>
                           <div>Role: <span className="text-slate-350">{signupRole}</span></div>
@@ -551,14 +551,14 @@ export default function Home() {
           {/* Top Header */}
           <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur flex items-center justify-between px-8 shrink-0 select-none">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-600 rounded-lg text-white">
+              <div className="p-2 bg-zinc-200 rounded-lg text-black">
                 <Trello className="w-5 h-5" />
               </div>
               <div>
                 <h1 className="font-extrabold text-md leading-tight tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
                   CollabPM
                 </h1>
-                <span className="text-[9px] text-indigo-400 font-bold tracking-wider uppercase">
+                <span className="text-[9px] text-zinc-400 font-bold tracking-wider uppercase">
                   AI Powered CRDT Board
                 </span>
               </div>
@@ -586,7 +586,7 @@ export default function Home() {
               <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
                 <div className="text-right">
                   <div className="text-xs font-bold text-white leading-none">{user.name}</div>
-                  <div className="text-[9px] text-indigo-400 font-bold tracking-wider uppercase mt-1">{user.role}</div>
+                  <div className="text-[9px] text-zinc-400 font-bold tracking-wider uppercase mt-1">{user.role}</div>
                 </div>
                 <button
                   onClick={() => {
@@ -613,7 +613,7 @@ export default function Home() {
                 <div className="flex items-center justify-between border-b border-slate-850 pb-4">
                   <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <BrainCircuit className="w-6 h-6 text-indigo-400" />
+                      <BrainCircuit className="w-6 h-6 text-zinc-300" />
                       AI Insights & Audit
                     </h2>
                     <p className="text-slate-400 text-sm">
@@ -626,13 +626,13 @@ export default function Home() {
                     <button
                       onClick={triggerAudit}
                       disabled={auditLoading || !isConnected}
-                      className="flex items-center gap-2 px-4.5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                      className="flex items-center gap-2 px-4.5 py-2.5 bg-zinc-200 hover:bg-white disabled:bg-slate-800 disabled:text-slate-500 text-black text-xs font-bold rounded-lg transition cursor-pointer"
                     >
                       <Play className="w-4 h-4" />
                       {auditLoading ? "Auditing Board..." : "Trigger AI Board Audit"}
                     </button>
                     {auditMessage && (
-                      <span className="text-[11px] text-indigo-400 font-medium">
+                      <span className="text-[11px] text-zinc-400 font-medium">
                         {auditMessage}
                       </span>
                     )}
@@ -671,7 +671,7 @@ export default function Home() {
                   {/* Bottleneck Audits */}
                   <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-4 lg:col-span-2">
                     <h3 className="font-semibold text-white flex items-center gap-2 text-sm uppercase tracking-wider text-slate-400">
-                      <TrendingUp className="w-4 h-4 text-indigo-400" />
+                      <TrendingUp className="w-4 h-4 text-zinc-300" />
                       Column Bottleneck Analysis
                     </h3>
                     {aiInsights.bottlenecks && aiInsights.bottlenecks.length > 0 ? (
@@ -713,9 +713,9 @@ export default function Home() {
                       {aiInsights.assignmentSuggestions.map((sug, idx) => (
                         <div key={idx} className="p-5 rounded-lg bg-slate-950 border border-slate-850 flex flex-col justify-between gap-4">
                           <div className="space-y-2">
-                            <div className="text-xs font-semibold text-indigo-400">Task: {sug.cardTitle}</div>
+                            <div className="text-xs font-semibold text-zinc-300">Task: {sug.cardTitle}</div>
                             <div className="text-sm font-bold text-white">
-                              Suggesting: <span className="underline decoration-indigo-500">{sug.suggestedAssigneeName}</span>
+                              Suggesting: <span className="underline decoration-zinc-400">{sug.suggestedAssigneeName}</span>
                             </div>
                             <p className="text-xs text-slate-400 leading-relaxed">
                               {sug.reason}
@@ -742,7 +742,7 @@ export default function Home() {
             {activeTab === "team-load" && (
               <div className="flex-1 p-8 overflow-y-auto space-y-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2 border-b border-slate-850 pb-4">
-                  <Users className="w-6 h-6 text-indigo-400" />
+                  <Users className="w-6 h-6 text-zinc-300" />
                   Team Load Balancing
                 </h2>
                 <p className="text-slate-400 text-sm max-w-xl">
@@ -762,7 +762,7 @@ export default function Home() {
                         </div>
                         <div className="flex justify-between items-center text-xs text-slate-400">
                           <span>Total Story Points:</span>
-                          <span className="font-mono text-sm font-bold text-indigo-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+                          <span className="font-mono text-sm font-bold text-zinc-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
                             {load.points} pts
                           </span>
                         </div>
@@ -780,7 +780,7 @@ export default function Home() {
             {activeTab === "digest" && (
               <div className="flex-1 p-8 overflow-y-auto space-y-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2 border-b border-slate-850 pb-4">
-                  <FileText className="w-6 h-6 text-indigo-400" />
+                  <FileText className="w-6 h-6 text-zinc-300" />
                   Weekly Sprint Digest Reports
                 </h2>
                 <p className="text-slate-400 text-sm max-w-xl">
@@ -796,11 +796,11 @@ export default function Home() {
             {activeTab === "github" && (
               <div className="flex-1 p-8 overflow-y-auto space-y-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2 border-b border-slate-850 pb-4">
-                  <FolderGit2 className="w-6 h-6 text-indigo-400" />
+                  <FolderGit2 className="w-6 h-6 text-zinc-300" />
                   GitHub Issues Importer
                 </h2>
                 <p className="text-slate-400 max-w-xl">
-                  Paste a public GitHub repository link (e.g. <code className="bg-slate-900 px-1 py-0.5 rounded text-indigo-400">https://github.com/facebook/react</code>) to scrape and import active open issues as board cards automatically.
+                  Paste a public GitHub repository link (e.g. <code className="bg-slate-900 px-1 py-0.5 rounded text-zinc-300">https://github.com/facebook/react</code>) to scrape and import active open issues as board cards automatically.
                 </p>
                 
                 <form onSubmit={handleGithubImport} className="max-w-xl p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-4">
@@ -810,17 +810,17 @@ export default function Home() {
                     value={githubUrl}
                     onChange={(e) => setGithubUrl(e.target.value)}
                     disabled={githubLoading}
-                    className="w-full bg-slate-950 text-white border border-slate-850 rounded-lg p-3 text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 text-white border border-slate-850 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-400"
                   />
                   <button 
                     type="submit"
                     disabled={githubLoading}
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-850 disabled:text-slate-500 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                    className="px-5 py-2.5 bg-zinc-200 hover:bg-white disabled:bg-slate-850 disabled:text-slate-500 text-black text-xs font-bold rounded-lg transition cursor-pointer"
                   >
                     {githubLoading ? "Importing Issues..." : "Import Repository Issues"}
                   </button>
                   {githubMessage && (
-                    <div className="text-xs text-indigo-400 mt-2 font-medium">
+                    <div className="text-xs text-zinc-400 mt-2 font-medium">
                       {githubMessage}
                     </div>
                   )}

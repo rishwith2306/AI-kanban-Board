@@ -20,11 +20,11 @@
   width: 100%;
   max-width: 32rem;
   border-radius: 1.5rem;
-  background-color: rgba(15, 23, 42, 0.95); /* slate-900 */
-  border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700 */
+  background-color: rgba(9, 9, 11, 0.95); /* zinc-950 (black) */
+  border: 1px solid rgba(63, 63, 70, 0.5); /* zinc-700 */
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
-    0 0 15px rgba(99, 102, 241, 0.1);
+    0 0 15px rgba(228, 228, 231, 0.05);
 }
 
 .step-indicator-row {
@@ -67,24 +67,24 @@
   transition: all 250ms;
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
-  color: #94a3b8;
+  color: #a1a1aa; /* zinc-400 */
   cursor: pointer;
   font-weight: 500;
   font-size: 0.875rem;
-  border: 1px solid rgba(71, 85, 105, 0.3);
+  border: 1px solid rgba(63, 63, 70, 0.5);
   background-color: transparent;
 }
 
 .back-button:hover {
   color: #fff;
-  border-color: #6366f1;
-  background-color: rgba(99, 102, 241, 0.1);
+  border-color: #cbd5e1; /* silver zinc-200 */
+  background-color: rgba(228, 228, 231, 0.1);
 }
 
 .back-button.inactive {
   pointer-events: none;
   opacity: 0.5;
-  color: #64748b;
+  color: #52525b;
 }
 
 .next-button {
@@ -93,23 +93,23 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  background-color: #6366f1; /* indigo-500 */
-  color: #fff;
-  font-weight: 600;
+  background-color: #f4f4f5; /* silver (zinc-100) */
+  color: #09090b; /* black (zinc-950) */
+  font-weight: 650;
   font-size: 0.875rem;
   padding: 0.5rem 1.25rem;
   cursor: pointer;
   border: none;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.05);
 }
 
 .next-button:hover {
-  background-color: #4f46e5; /* indigo-600 */
-  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
+  background-color: #ffffff; /* pure white */
+  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.1);
 }
 
 .next-button:active {
-  background-color: #4338ca;
+  background-color: #e4e4e7; /* zinc-200 */
 }
 
 .step-indicator {
