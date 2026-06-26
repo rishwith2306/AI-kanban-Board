@@ -73,6 +73,10 @@ export function useRealtimeBoard(boardId: string) {
   const docRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
 
+  // Refs for throttling mouse cursor updates
+  const lastUpdateRef = useRef<number>(0);
+  const throttleTimeoutRef = useRef<any>(null);
+
   // Initialize random client user details
   useEffect(() => {
     const randomName = `User ${Math.floor(Math.random() * 1000)}`;
@@ -199,14 +203,34 @@ export function useRealtimeBoard(boardId: string) {
       provider.awareness.off("change", handleAwareness);
       provider.disconnect();
       doc.destroy();
+      if (throttleTimeoutRef.current) {
+        clearTimeout(throttleTimeoutRef.current);
+      }
     };
   }, [boardId, userName, updateState, updateInsights]);
 
-  // Update cursor position in awareness
+  // Update cursor position in awareness with a 50ms throttle (and trailing edge)
   const updateCursor = useCallback((x: number, y: number) => {
     const provider = providerRef.current;
     if (!provider || !isConnected) return;
-    provider.awareness.setLocalStateField("cursor", { x, y });
+
+    const now = Date.now();
+    const throttleMs = 50; // Update cursor at most every 50ms
+
+    if (throttleTimeoutRef.current) {
+      clearTimeout(throttleTimeoutRef.current);
+      throttleTimeoutRef.current = null;
+    }
+
+    if (now - lastUpdateRef.current >= throttleMs) {
+      provider.awareness.setLocalStateField("cursor", { x, y });
+      lastUpdateRef.current = now;
+    } else {
+      throttleTimeoutRef.current = setTimeout(() => {
+        provider.awareness.setLocalStateField("cursor", { x, y });
+        lastUpdateRef.current = Date.now();
+      }, throttleMs - (now - lastUpdateRef.current));
+    }
   }, [isConnected]);
 
   // Mutation: Add a new list

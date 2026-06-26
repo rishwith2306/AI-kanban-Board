@@ -1,9 +1,305 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { useRealtimeBoard, Card } from "../hooks/useRealtimeBoard";
+import { useRealtimeBoard, Card, List } from "../hooks/useRealtimeBoard";
 import { Plus, X, AlignLeft, Calendar, User, Eye, Wifi, WifiOff } from "lucide-react";
+
+interface KanbanCardProps {
+  card: Card;
+  index: number;
+  listId: string;
+  onCardClick: (card: Card, listId: string) => void;
+}
+
+const KanbanCard = React.memo(
+  ({ card, index, listId, onCardClick }: KanbanCardProps) => {
+    return (
+      <Draggable key={card.id} draggableId={card.id} index={index}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            onClick={() => onCardClick(card, listId)}
+            className={`p-4 rounded-lg border border-slate-800 bg-slate-900 hover:border-zinc-500/50 hover:bg-slate-900/80 transition-all cursor-grab active:cursor-grabbing shadow-sm flex flex-col gap-2 ${
+              snapshot.isDragging ? "shadow-2xl border-zinc-400 rotate-1 bg-slate-850" : ""
+            }`}
+          >
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-sm font-semibold text-slate-200 line-clamp-2">
+                {card.title || <span className="text-slate-600 italic">Untitled Task</span>}
+              </span>
+              <Eye className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100" />
+            </div>
+
+            {card.description && (
+              <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                {card.description}
+              </p>
+            )}
+
+            {/* Tags / Metadata */}
+            {(card.dueDate || card.aiComplexityEstimate || card.aiTags?.length > 0) && (
+              <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-800/40">
+                {card.aiComplexityEstimate && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-500/10 text-zinc-300 border border-zinc-500/20">
+                    {card.aiComplexityEstimate}
+                  </span>
+                )}
+                {card.dueDate && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 flex items-center gap-1">
+                    <Calendar className="w-2.5 h-2.5" />
+                    {new Date(card.dueDate).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                )}
+                {card.aiTags?.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-950 text-zinc-350"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </Draggable>
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.index === next.index &&
+      prev.listId === next.listId &&
+      prev.onCardClick === next.onCardClick &&
+      prev.card.id === next.card.id &&
+      prev.card.title === next.card.title &&
+      prev.card.description === next.card.description &&
+      prev.card.position === next.card.position &&
+      prev.card.assigneeId === next.card.assigneeId &&
+      prev.card.dueDate === next.card.dueDate &&
+      prev.card.aiComplexityEstimate === next.card.aiComplexityEstimate &&
+      prev.card.aiSprintRisk === next.card.aiSprintRisk &&
+      prev.card.aiTags.length === next.card.aiTags.length &&
+      prev.card.aiTags.every((t, i) => t === next.card.aiTags[i])
+    );
+  }
+);
+KanbanCard.displayName = "KanbanCard";
+
+interface CardCreatorProps {
+  listId: string;
+  onAddCard: (listId: string, title: string) => void;
+}
+
+const CardCreator = React.memo(({ listId, onAddCard }: CardCreatorProps) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const [title, setTitle] = useState("");
+
+  const handleAdd = () => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    onAddCard(listId, trimmed);
+    setTitle("");
+    setIsAdding(false);
+  };
+
+  if (isAdding) {
+    return (
+      <div className="space-y-2">
+        <input
+          type="text"
+          placeholder="Enter task title..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAdd();
+            if (e.key === "Escape") setIsAdding(false);
+          }}
+          className="w-full text-xs bg-slate-950 text-white border border-slate-850 rounded p-2 focus:outline-none focus:border-zinc-400"
+          autoFocus
+        />
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => setIsAdding(false)}
+            className="p-1 px-2.5 text-xs text-slate-400 hover:text-white rounded transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAdd}
+            className="p-1 px-3 text-xs bg-zinc-200 hover:bg-white text-black rounded font-medium transition"
+          >
+            Add Card
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setIsAdding(true)}
+      className="w-full text-xs text-slate-400 hover:text-white hover:bg-slate-850/50 flex items-center gap-1.5 p-1.5 rounded transition justify-center"
+    >
+      <Plus className="w-3.5 h-3.5" /> Add Task Card
+    </button>
+  );
+});
+CardCreator.displayName = "CardCreator";
+
+interface KanbanListProps {
+  list: List;
+  onCardClick: (card: Card, listId: string) => void;
+  onAddCard: (listId: string, title: string) => void;
+}
+
+const KanbanList = React.memo(
+  ({ list, onCardClick, onAddCard }: KanbanListProps) => {
+    return (
+      <div className="w-72 bg-slate-900/40 border border-slate-850 rounded-xl flex flex-col max-h-[calc(100vh-200px)] shadow-lg">
+        {/* List Header */}
+        <div className="p-3.5 flex justify-between items-center border-b border-slate-850/60 bg-slate-900/60 rounded-t-xl">
+          <span className="text-sm font-bold text-slate-200">{list.name}</span>
+          <span className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full font-mono">
+            {list.cards.length}
+          </span>
+        </div>
+
+        {/* Cards Container */}
+        <Droppable droppableId={list.id} type="CARD">
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`flex-1 overflow-y-auto p-3 space-y-3 min-h-[50px] transition-colors ${
+                snapshot.isDraggingOver ? "bg-zinc-800/10" : ""
+              }`}
+            >
+              {list.cards.map((card, index) => (
+                <KanbanCard
+                  key={card.id}
+                  card={card}
+                  index={index}
+                  listId={list.id}
+                  onCardClick={onCardClick}
+                />
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+
+        {/* List Footer - Inline Card Creation */}
+        <div className="p-3 bg-slate-900/20 rounded-b-xl border-t border-slate-850/40">
+          <CardCreator listId={list.id} onAddCard={onAddCard} />
+        </div>
+      </div>
+    );
+  },
+  (prev, next) => {
+    if (
+      prev.list.id !== next.list.id ||
+      prev.list.name !== next.list.name ||
+      prev.list.position !== next.list.position ||
+      prev.list.cards.length !== next.list.cards.length ||
+      prev.onCardClick !== next.onCardClick ||
+      prev.onAddCard !== next.onAddCard
+    ) {
+      return false;
+    }
+    // Check if every card is identical
+    for (let i = 0; i < prev.list.cards.length; i++) {
+      const c1 = prev.list.cards[i];
+      const c2 = next.list.cards[i];
+      if (
+        c1.id !== c2.id ||
+        c1.title !== c2.title ||
+        c1.description !== c2.description ||
+        c1.position !== c2.position ||
+        c1.assigneeId !== c2.assigneeId ||
+        c1.dueDate !== c2.dueDate ||
+        c1.aiComplexityEstimate !== c2.aiComplexityEstimate ||
+        c1.aiSprintRisk !== c2.aiSprintRisk ||
+        c1.aiTags.length !== c2.aiTags.length ||
+        !c1.aiTags.every((t, idx) => t === c2.aiTags[idx])
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+);
+KanbanList.displayName = "KanbanList";
+
+interface ListCreatorProps {
+  onAddList: (name: string) => void;
+}
+
+const ListCreator = React.memo(({ onAddList }: ListCreatorProps) => {
+  const [val, setVal] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!val.trim()) return;
+    onAddList(val.trim());
+    setVal("");
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="w-72 shrink-0 bg-slate-900/20 border border-dashed border-slate-800 rounded-xl p-4 flex flex-col gap-3"
+    >
+      <input
+        type="text"
+        placeholder="Add new list..."
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        className="w-full bg-slate-950 text-slate-200 border border-slate-850 rounded-lg p-2.5 text-sm focus:outline-none focus:border-zinc-400"
+      />
+      <button
+        type="submit"
+        className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs rounded-lg border border-slate-800 font-medium transition flex items-center gap-1.5 justify-center"
+      >
+        <Plus className="w-4 h-4" /> Create Column
+      </button>
+    </form>
+  );
+});
+ListCreator.displayName = "ListCreator";
+
+interface KanbanGridProps {
+  lists: List[];
+  onCardClick: (card: Card, listId: string) => void;
+  onAddCard: (listId: string, title: string) => void;
+  onAddList: (name: string) => void;
+  onDragEnd: (result: DropResult) => void;
+}
+
+const KanbanGrid = React.memo(({ lists, onCardClick, onAddCard, onAddList, onDragEnd }: KanbanGridProps) => {
+  return (
+    <div className="flex-1 overflow-x-auto p-6 bg-slate-950 flex gap-6 items-start">
+      <DragDropContext onDragEnd={onDragEnd}>
+        {lists.map((list) => (
+          <KanbanList
+            key={list.id}
+            list={list}
+            onCardClick={onCardClick}
+            onAddCard={onAddCard}
+          />
+        ))}
+      </DragDropContext>
+
+      <ListCreator onAddList={onAddList} />
+    </div>
+  );
+});
+KanbanGrid.displayName = "KanbanGrid";
 
 interface KanbanBoardProps {
   boardId: string;
@@ -22,10 +318,6 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
     updateCardField,
   } = useRealtimeBoard(boardId);
 
-  const [newListVal, setNewListVal] = useState("");
-  const [newCardVal, setNewCardVal] = useState<{ [listId: string]: string }>({});
-  const [addingCardToList, setAddingCardToList] = useState<string | null>(null);
-  
   // Selected Card for Detail Modal
   const [selectedCard, setSelectedCard] = useState<{ card: Card; listId: string } | null>(null);
 
@@ -41,28 +333,17 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
   }, [updateCursor]);
 
   // Handle Drag End event
-  const onDragEnd = (result: DropResult) => {
+  const onDragEnd = useCallback((result: DropResult) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     moveCard(draggableId, source.droppableId, destination.droppableId, destination.index);
-  };
+  }, [moveCard]);
 
-  const handleAddList = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newListVal.trim()) return;
-    addList(newListVal.trim());
-    setNewListVal("");
-  };
-
-  const handleAddCard = (listId: string) => {
-    const title = newCardVal[listId]?.trim();
-    if (!title) return;
-    addCard(listId, title);
-    setNewCardVal((prev) => ({ ...prev, [listId]: "" }));
-    setAddingCardToList(null);
-  };
+  const handleCardClick = useCallback((card: Card, listId: string) => {
+    setSelectedCard({ card, listId });
+  }, []);
 
   return (
     <div className="flex flex-col flex-1 h-full select-none">
@@ -138,159 +419,14 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
         </div>
       </div>
 
-      {/* Kanban Lists and Cards Grid */}
-      <div className="flex-1 overflow-x-auto p-6 bg-slate-950 flex gap-6 items-start">
-        <DragDropContext onDragEnd={onDragEnd}>
-          {lists.map((list) => (
-            <div
-              key={list.id}
-              className="w-72 bg-slate-900/40 border border-slate-850 rounded-xl flex flex-col max-h-[calc(100vh-200px)] shadow-lg"
-            >
-              {/* List Header */}
-              <div className="p-3.5 flex justify-between items-center border-b border-slate-850/60 bg-slate-900/60 rounded-t-xl">
-                <span className="text-sm font-bold text-slate-200">{list.name}</span>
-                <span className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full font-mono">
-                  {list.cards.length}
-                </span>
-              </div>
-
-              {/* Cards Container */}
-              <Droppable droppableId={list.id} type="CARD">
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`flex-1 overflow-y-auto p-3 space-y-3 min-h-[50px] transition-colors ${
-                      snapshot.isDraggingOver ? "bg-zinc-800/10" : ""
-                    }`}
-                  >
-                    {list.cards.map((card, index) => (
-                      <Draggable key={card.id} draggableId={card.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onClick={() => setSelectedCard({ card, listId: list.id })}
-                            className={`p-4 rounded-lg border border-slate-800 bg-slate-900 hover:border-zinc-500/50 hover:bg-slate-900/80 transition-all cursor-grab active:cursor-grabbing shadow-sm flex flex-col gap-2 ${
-                              snapshot.isDragging ? "shadow-2xl border-zinc-400 rotate-1 bg-slate-850" : ""
-                            }`}
-                          >
-                            <div className="flex justify-between items-start gap-2">
-                              <span className="text-sm font-semibold text-slate-200 line-clamp-2">
-                                {card.title || <span className="text-slate-600 italic">Untitled Task</span>}
-                              </span>
-                              <Eye className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100" />
-                            </div>
-
-                            {card.description && (
-                              <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                                {card.description}
-                              </p>
-                            )}
-
-                            {/* Tags / Metadata */}
-                            {(card.dueDate || card.aiComplexityEstimate || card.aiTags?.length > 0) && (
-                              <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-800/40">
-                                {card.aiComplexityEstimate && (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-500/10 text-zinc-300 border border-zinc-500/20">
-                                    {card.aiComplexityEstimate}
-                                  </span>
-                                )}
-                                {card.dueDate && (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 flex items-center gap-1">
-                                    <Calendar className="w-2.5 h-2.5" />
-                                    {new Date(card.dueDate).toLocaleDateString(undefined, {
-                                      month: "short",
-                                      day: "numeric",
-                                    })}
-                                  </span>
-                                )}
-                                {card.aiTags?.map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-950 text-zinc-350"
-                                  >
-                                    #{tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-
-              {/* List Footer - Inline Card Creation */}
-              <div className="p-3 bg-slate-900/20 rounded-b-xl border-t border-slate-850/40">
-                {addingCardToList === list.id ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Enter task title..."
-                      value={newCardVal[list.id] || ""}
-                      onChange={(e) =>
-                        setNewCardVal((prev) => ({ ...prev, [list.id]: e.target.value }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAddCard(list.id);
-                        if (e.key === "Escape") setAddingCardToList(null);
-                      }}
-                      className="w-full text-xs bg-slate-950 text-white border border-slate-850 rounded p-2 focus:outline-none focus:border-zinc-400"
-                      autoFocus
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => setAddingCardToList(null)}
-                        className="p-1 px-2.5 text-xs text-slate-400 hover:text-white rounded transition"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleAddCard(list.id)}
-                        className="p-1 px-3 text-xs bg-zinc-200 hover:bg-white text-black rounded font-medium transition"
-                      >
-                        Add Card
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setAddingCardToList(list.id)}
-                    className="w-full text-xs text-slate-400 hover:text-white hover:bg-slate-850/50 flex items-center gap-1.5 p-1.5 rounded transition justify-center"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Task Card
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </DragDropContext>
-
-        {/* Add New List Column */}
-        <form
-          onSubmit={handleAddList}
-          className="w-72 shrink-0 bg-slate-900/20 border border-dashed border-slate-800 rounded-xl p-4 flex flex-col gap-3"
-        >
-          <input
-            type="text"
-            placeholder="Add new list..."
-            value={newListVal}
-            onChange={(e) => setNewListVal(e.target.value)}
-            className="w-full bg-slate-950 text-slate-200 border border-slate-850 rounded-lg p-2.5 text-sm focus:outline-none focus:border-zinc-400"
-          />
-          <button
-            type="submit"
-            className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs rounded-lg border border-slate-800 font-medium transition flex items-center gap-1.5 justify-center"
-          >
-            <Plus className="w-4 h-4" /> Create Column
-          </button>
-        </form>
-      </div>
+      {/* Kanban Grid */}
+      <KanbanGrid
+        lists={lists}
+        onCardClick={handleCardClick}
+        onAddCard={addCard}
+        onAddList={addList}
+        onDragEnd={onDragEnd}
+      />
 
       {/* Card Detail Modal */}
       {selectedCard && (
@@ -375,3 +511,4 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
     </div>
   );
 }
+
