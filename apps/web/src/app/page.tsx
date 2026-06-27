@@ -27,6 +27,7 @@ import ClickSpark from "../components/ClickSpark";
 import LightRays from "../components/LightRays";
 import { GooeyInput } from "../components/ui/gooey-input";
 import { FloatingDock, FloatingDockItem } from "../components/ui/floating-dock";
+import DotField from "../components/DotField";
 
 type Tab = "board" | "ai-insights" | "team-load" | "digest" | "github" | "home" | "login" | "signup" | "features";
 
@@ -606,9 +607,24 @@ export default function Home() {
         </div>
       ) : (
         // DASHBOARD & APP STATE
-        <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+        <div className="flex flex-col h-screen bg-black text-slate-100 overflow-hidden font-sans relative">
+          {/* Global Background DotField Animation covering top header, content, and bottom dock */}
+          <div className="absolute inset-0 pointer-events-none z-0">
+            <DotField
+              dotRadius={1.5}
+              dotSpacing={14}
+              bulgeStrength={67}
+              glowRadius={160}
+              sparkle={false}
+              waveAmplitude={0}
+              gradientFrom="rgba(226, 232, 240, 0.75)"
+              gradientTo="rgba(148, 163, 184, 0.45)"
+              glowColor="rgba(203, 213, 225, 0.3)"
+            />
+          </div>
+
           {/* Top Header */}
-          <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur flex items-center justify-between px-8 shrink-0 select-none gap-4">
+          <header className="h-16 border-b border-slate-800/80 bg-black/40 backdrop-blur flex items-center justify-between px-8 shrink-0 select-none gap-4 relative z-20">
             <div className="flex items-center gap-3 shrink-0">
               <div className="p-2 bg-zinc-200 rounded-lg text-black">
                 <Trello className="w-5 h-5" />
@@ -689,7 +705,7 @@ export default function Home() {
           </header>
 
           {/* Main Dashboard Content */}
-          <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 pb-28">
+          <main className="flex-1 flex flex-col overflow-hidden bg-transparent pb-28 relative z-10">
             {activeTab === "board" && (
               <KanbanBoard boardId={defaultBoardId} />
             )}

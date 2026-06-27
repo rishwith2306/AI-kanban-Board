@@ -311,20 +311,23 @@ interface KanbanGridProps {
 
 const KanbanGrid = React.memo(({ lists, onCardClick, onAddCard, onAddList, onDeleteList, onDragEnd }: KanbanGridProps) => {
   return (
-    <div className="flex-1 overflow-x-auto p-6 bg-slate-950 flex gap-6 items-start">
-      <DragDropContext onDragEnd={onDragEnd}>
-        {lists.map((list) => (
-          <KanbanList
-            key={list.id}
-            list={list}
-            onCardClick={onCardClick}
-            onAddCard={onAddCard}
-            onDeleteList={onDeleteList}
-          />
-        ))}
-      </DragDropContext>
+    <div className="flex-1 relative overflow-x-auto overflow-y-hidden p-6 bg-transparent">
+      {/* Board Columns Grid Content */}
+      <div className="relative z-10 flex gap-6 items-start min-h-full">
+        <DragDropContext onDragEnd={onDragEnd}>
+          {lists.map((list) => (
+            <KanbanList
+              key={list.id}
+              list={list}
+              onCardClick={onCardClick}
+              onAddCard={onAddCard}
+              onDeleteList={onDeleteList}
+            />
+          ))}
+        </DragDropContext>
 
-      <ListCreator onAddList={onAddList} />
+        <ListCreator onAddList={onAddList} />
+      </div>
     </div>
   );
 });
@@ -421,7 +424,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
       })}
 
       {/* Board Headers / Controls */}
-      <div className="flex items-center justify-between py-4 px-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
+      <div className="flex items-center justify-between py-4 px-6 border-b border-slate-800/80 bg-black/40 backdrop-blur relative z-20">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-bold text-white">Board Workspace</h2>
           <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
