@@ -152,7 +152,7 @@ export async function analyzeBoardState(boardData: BoardData): Promise<BoardAudi
       You are an AI Project Manager. Analyze the following Kanban board data and perform:
       1. Bottleneck detection: Identify columns with high card densities and their likely causes (e.g. overloaded assignee, label friction).
       2. Sprint Risk Assessment: Evaluate velocity and the sprint timeline (Start: ${boardData.sprintStartDate || "N/A"}, End: ${boardData.sprintEndDate || "N/A"}).
-      3. Auto-assignment Suggestions: For any cards with no assignee (assigneeId is null), suggest the best collaborator based on task load and names.
+      3. Auto-assignment Suggestions: For any cards with no assignee (assigneeId is null), suggest the best collaborator by matching the task title/description with the team members' history of already-assigned or completed tasks on this board (inferring expertise/previous domain experience from other cards they are assigned to), while balancing current workload.
 
       Board Data:
       ${JSON.stringify(boardData, null, 2)}

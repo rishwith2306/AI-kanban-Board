@@ -18,13 +18,15 @@ import {
   Lock,
   Mail,
   User as UserIcon,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck
 } from "lucide-react";
-import Dock, { DockItemData } from "../components/Dock";
 import Stepper, { Step } from "../components/Stepper";
 import PillNav from "../components/PillNav";
 import ClickSpark from "../components/ClickSpark";
 import LightRays from "../components/LightRays";
+import { GooeyInput } from "../components/ui/gooey-input";
+import { FloatingDock, FloatingDockItem } from "../components/ui/floating-dock";
 
 type Tab = "board" | "ai-insights" | "team-load" | "digest" | "github" | "home" | "login" | "signup" | "features";
 
@@ -32,6 +34,9 @@ export default function Home() {
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("home");
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Stepper signup form states
   const [signupName, setSignupName] = useState("");
@@ -41,6 +46,7 @@ export default function Home() {
   // Login form states
   const [loginName, setLoginName] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginRole, setLoginRole] = useState("Engineer");
 
   const defaultBoardId = "d3b07384-d113-4c90-a5c9-959c25fdf299";
 
@@ -200,7 +206,11 @@ export default function Home() {
       alert("Please enter your name.");
       return;
     }
-    const newUser = { name: loginName.trim(), email: loginEmail.trim(), role: "Engineer" };
+    if (!loginEmail.trim() || !loginEmail.includes("@")) {
+      alert("Please enter a valid Gmail / Email address.");
+      return;
+    }
+    const newUser = { name: loginName.trim(), email: loginEmail.trim(), role: loginRole };
     localStorage.setItem("collab-pm-user", JSON.stringify(newUser));
     setUser(newUser);
     setActiveTab("board");
@@ -208,7 +218,11 @@ export default function Home() {
 
   const handleSignupComplete = () => {
     if (!signupName.trim()) {
-      alert("Please configure your name in step 2.");
+      alert("Name is mandatory! Please enter your full name in Step 2.");
+      return;
+    }
+    if (!signupEmail.trim() || !signupEmail.includes("@")) {
+      alert("Gmail/Email is mandatory! Please enter a valid email address in Step 2.");
       return;
     }
     const newUser = {
@@ -229,39 +243,44 @@ export default function Home() {
     { label: "Sign Up", href: "#signup", onClick: () => setActiveTab("signup") }
   ];
 
-  const dockItems: DockItemData[] = [
+  const floatingDockItems: FloatingDockItem[] = [
     {
-      icon: <Trello className={`w-5 h-5 transition-colors ${activeTab === "board" ? "text-zinc-300" : "text-slate-400"}`} />,
-      label: "Kanban Board",
+      title: "Kanban Board",
+      icon: <Trello className={`h-5 w-5 ${activeTab === "board" ? "text-white" : "text-neutral-400"}`} />,
+      href: "#board",
       onClick: () => setActiveTab("board")
     },
     {
+      title: "AI Insights",
       icon: (
-        <div className="relative">
-          <BrainCircuit className={`w-5 h-5 transition-colors ${activeTab === "ai-insights" ? "text-zinc-300" : "text-slate-400"}`} />
+        <div className="relative flex items-center justify-center">
+          <BrainCircuit className={`h-5 w-5 ${activeTab === "ai-insights" ? "text-white" : "text-neutral-400"}`} />
           {aiInsights.assignmentSuggestions.length > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 py-0.5 leading-none rounded-full">
+            <span className="absolute -top-2 -right-2 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 py-0.5 leading-none rounded-full">
               {aiInsights.assignmentSuggestions.length}
             </span>
           )}
         </div>
       ),
-      label: "AI Insights",
+      href: "#ai-insights",
       onClick: () => setActiveTab("ai-insights")
     },
     {
-      icon: <Users className={`w-5 h-5 transition-colors ${activeTab === "team-load" ? "text-zinc-300" : "text-slate-400"}`} />,
-      label: "Team Load",
+      title: "Team Load",
+      icon: <Users className={`h-5 w-5 ${activeTab === "team-load" ? "text-white" : "text-neutral-400"}`} />,
+      href: "#team-load",
       onClick: () => setActiveTab("team-load")
     },
     {
-      icon: <FileText className={`w-5 h-5 transition-colors ${activeTab === "digest" ? "text-zinc-300" : "text-slate-400"}`} />,
-      label: "Weekly Digest",
+      title: "Weekly Digest",
+      icon: <FileText className={`h-5 w-5 ${activeTab === "digest" ? "text-white" : "text-neutral-400"}`} />,
+      href: "#digest",
       onClick: () => setActiveTab("digest")
     },
     {
-      icon: <Github className={`w-5 h-5 transition-colors ${activeTab === "github" ? "text-zinc-300" : "text-slate-400"}`} />,
-      label: "GitHub Importer",
+      title: "GitHub Importer",
+      icon: <Github className={`h-5 w-5 ${activeTab === "github" ? "text-white" : "text-neutral-400"}`} />,
+      href: "#github",
       onClick: () => setActiveTab("github")
     }
   ];
@@ -396,6 +415,36 @@ export default function Home() {
                     <p className="text-xs text-slate-400 mt-1.5">Sign in to your collaborative board</p>
                   </div>
 
+                  {/* Role toggle (Standard vs Admin Login) */}
+                  <div className="flex bg-slate-950/80 p-1 rounded-lg border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setLoginRole("Engineer")}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition cursor-pointer ${
+                        loginRole !== "Admin"
+                          ? "bg-slate-800 text-white shadow"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      User Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginRole("Admin");
+                        if (!loginEmail) setLoginEmail("admin@collabpm.com");
+                        if (!loginName) setLoginName("Administrator");
+                      }}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1 ${
+                        loginRole === "Admin"
+                          ? "bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow"
+                          : "text-slate-400 hover:text-purple-300"
+                      }`}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-purple-400" /> Admin Login
+                    </button>
+                  </div>
+
                   <form onSubmit={handleLoginSubmit} className="space-y-4">
                     <div className="space-y-3.5">
                       <div className="relative">
@@ -405,7 +454,7 @@ export default function Home() {
                           required
                           value={loginName}
                           onChange={(e) => setLoginName(e.target.value)}
-                          placeholder="Your Full Name"
+                          placeholder="Your Full Name *"
                           className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                         />
                       </div>
@@ -416,7 +465,7 @@ export default function Home() {
                           required
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
-                          placeholder="Email Address"
+                          placeholder="Gmail / Email Address *"
                           className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                         />
                       </div>
@@ -424,9 +473,13 @@ export default function Home() {
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 bg-zinc-200 hover:bg-white text-black text-xs font-bold rounded-lg transition shadow-lg shadow-zinc-200/10 cursor-pointer flex items-center justify-center gap-1.5"
+                      className={`w-full py-2.5 text-xs font-bold rounded-lg transition shadow-lg cursor-pointer flex items-center justify-center gap-1.5 ${
+                        loginRole === "Admin"
+                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-900/20"
+                          : "bg-zinc-200 hover:bg-white text-black shadow-zinc-200/10"
+                      }`}
                     >
-                      <Lock className="w-3.5 h-3.5" /> Sign In
+                      <Lock className="w-3.5 h-3.5" /> {loginRole === "Admin" ? "Sign In as Admin" : "Sign In"}
                     </button>
                   </form>
 
@@ -473,7 +526,10 @@ export default function Home() {
 
                     <Step>
                       <div className="space-y-4 py-2">
-                        <h3 className="font-bold text-white text-md">Introduce Yourself</h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-white text-md">Introduce Yourself</h3>
+                          <span className="text-[10px] text-amber-400 font-semibold">* Mandatory</span>
+                        </div>
                         <div className="space-y-3">
                           <div className="relative">
                             <UserIcon className="absolute left-3 top-3.5 w-4 h-4 text-slate-500" />
@@ -482,7 +538,7 @@ export default function Home() {
                               required
                               value={signupName}
                               onChange={(e) => setSignupName(e.target.value)}
-                              placeholder="Your Full Name (e.g. Alice Chen)"
+                              placeholder="Your Full Name * (Mandatory)"
                               className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                             />
                           </div>
@@ -493,7 +549,7 @@ export default function Home() {
                               required
                               value={signupEmail}
                               onChange={(e) => setSignupEmail(e.target.value)}
-                              placeholder="Your Email Address"
+                              placeholder="Your Gmail / Email Address * (Mandatory)"
                               className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                             />
                           </div>
@@ -504,19 +560,22 @@ export default function Home() {
                     <Step>
                       <div className="space-y-4 py-2">
                         <h3 className="font-bold text-white text-md">Select your Role</h3>
-                        <p className="text-xs text-slate-500">Gemini utilizes this to estimate task weights and balance workloads.</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          {["Engineer", "Designer", "Product Manager"].map((r) => (
+                        <p className="text-xs text-slate-500">Select your account role in the workspace.</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["Engineer", "Designer", "Product Manager", "Admin"].map((r) => (
                             <button
                               key={r}
                               type="button"
                               onClick={() => setSignupRole(r)}
-                              className={`p-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition cursor-pointer ${
+                              className={`p-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1 ${
                                 signupRole === r
-                                  ? "bg-zinc-200 border-zinc-300 text-black shadow-md shadow-zinc-200/10"
+                                  ? r === "Admin"
+                                    ? "bg-purple-600 border-purple-500 text-white shadow-md shadow-purple-500/20"
+                                    : "bg-zinc-200 border-zinc-300 text-black shadow-md shadow-zinc-200/10"
                                   : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900/60"
                               }`}
                             >
+                              {r === "Admin" && <ShieldCheck className="w-3.5 h-3.5" />}
                               {r}
                             </button>
                           ))}
@@ -549,8 +608,8 @@ export default function Home() {
         // DASHBOARD & APP STATE
         <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
           {/* Top Header */}
-          <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur flex items-center justify-between px-8 shrink-0 select-none">
-            <div className="flex items-center gap-3">
+          <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur flex items-center justify-between px-8 shrink-0 select-none gap-4">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="p-2 bg-zinc-200 rounded-lg text-black">
                 <Trello className="w-5 h-5" />
               </div>
@@ -564,15 +623,26 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
+            {/* GooeyInput Search Bar ("searchanything") */}
+            <div className="flex-1 flex justify-center max-w-md">
+              <GooeyInput
+                placeholder="Search anything..."
+                value={searchQuery}
+                onValueChange={(val) => setSearchQuery(val)}
+                collapsedWidth={130}
+                expandedWidth={280}
+              />
+            </div>
+
+            <div className="flex items-center gap-6 shrink-0">
+              <div className="flex items-center gap-2 hidden md:flex">
                 <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
                 <span className="text-xs font-semibold text-slate-400">
                   {isConnected ? "Connected" : "Disconnected"}
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-lg shadow-inner">
+              <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-lg shadow-inner hidden lg:flex">
                 <div className="w-6 h-6 rounded-full bg-slate-850 flex items-center justify-center font-bold text-slate-300 text-xs">
                   AI
                 </div>
@@ -582,11 +652,27 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* User details and logout */}
+              {/* Logged in User Details Display */}
               <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
                 <div className="text-right">
-                  <div className="text-xs font-bold text-white leading-none">{user.name}</div>
-                  <div className="text-[9px] text-zinc-400 font-bold tracking-wider uppercase mt-1">{user.role}</div>
+                  <div className="text-xs font-bold text-white leading-none flex items-center justify-end gap-1">
+                    {user.name}
+                    {user.role === "Admin" && (
+                      <ShieldCheck className="w-3.5 h-3.5 text-purple-400 inline" />
+                    )}
+                  </div>
+                  <div className="text-[9px] text-slate-400 font-medium leading-none mt-1">
+                    {user.email}
+                  </div>
+                  <div className="mt-1">
+                    <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                      user.role === "Admin"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                        : "bg-slate-800 text-zinc-300 border border-slate-700"
+                    }`}>
+                      {user.role}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => {
@@ -829,7 +915,9 @@ export default function Home() {
             )}
 
             {/* Floating Bottom Navigation Dock */}
-            <Dock items={dockItems} />
+            <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-auto">
+              <FloatingDock items={floatingDockItems} />
+            </div>
           </main>
         </div>
       )}

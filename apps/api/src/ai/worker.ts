@@ -164,7 +164,21 @@ async function handleBoardAudit(job: Job) {
     markdownContent: digestMarkdown,
   });
 
-  // 3. Sync insights to connected Yjs instances
+  // 3. Auto-assign tasks based on suggestions
+  if (Array.isArray(auditResult.assignmentSuggestions)) {
+    for (const suggestion of auditResult.assignmentSuggestions) {
+      if (suggestion.cardId && suggestion.suggestedAssigneeId) {
+        await db.update(cards)
+          .set({ assigneeId: suggestion.suggestedAssigneeId, updatedAt: new Date() })
+          .where(eq(cards.id, suggestion.cardId));
+
+        updateYjsCardField(boardId, suggestion.cardId, "assigneeId", suggestion.suggestedAssigneeId);
+        console.log(`Auto-assigned card "${suggestion.cardTitle || suggestion.cardId}" to collaborator ${suggestion.suggestedAssigneeName}`);
+      }
+    }
+  }
+
+  // 4. Sync insights to connected Yjs instances
   updateYjsBoardInsights(boardId, auditResult, digestMarkdown);
 
   console.log(`Audit completed for board: ${boardId}`);

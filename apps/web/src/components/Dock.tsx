@@ -22,6 +22,8 @@ interface DockItemProps {
   magnification: number;
   baseItemSize: number;
   label: string;
+  index: number;
+  unmagnifiedLeftRef: React.RefObject<number>;
 }
 
 interface DockLabelProps {
@@ -55,17 +57,18 @@ function DockItem({
   distance,
   magnification,
   baseItemSize,
-  label
+  label,
+  index,
+  unmagnifiedLeftRef
 }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isHovered = useMotionValue(0);
 
   const mouseDistance = useTransform(mouseX, (val: number) => {
-    const rect = ref.current?.getBoundingClientRect() ?? {
-      x: 0,
-      width: baseItemSize
-    };
-    return val - rect.x - baseItemSize / 2;
+    const gap = 16; // 1rem = 16px
+    const paddingLeft = 12; // 0.75rem = 12px
+    const itemCenter = unmagnifiedLeftRef.current + paddingLeft + index * (baseItemSize + gap) + baseItemSize / 2;
+    return val - itemCenter;
   });
 
   const targetSize = useTransform(mouseDistance, [-distance, 0, distance], [baseItemSize, magnification, baseItemSize]);
@@ -154,6 +157,7 @@ export default function Dock({
 }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
+  const unmagnifiedLeftRef = useRef<number>(0);
 
   const maxHeight = useMemo(
     () => Math.max(dockHeight, magnification + magnification / 2 + 4),
@@ -166,8 +170,12 @@ export default function Dock({
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
       <motion.div
         onMouseMove={(e: React.MouseEvent) => {
-          isHovered.set(1);
-          mouseX.set(e.pageX);
+          if (isHovered.get() === 0) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            unmagnifiedLeftRef.current = rect.left;
+            isHovered.set(1);
+          }
+          mouseX.set(e.clientX);
         }}
         onMouseLeave={() => {
           isHovered.set(0);
@@ -189,6 +197,8 @@ export default function Dock({
             magnification={magnification}
             baseItemSize={baseItemSize}
             label={item.label}
+            index={index}
+            unmagnifiedLeftRef={unmagnifiedLeftRef}
           >
             <DockIcon>{item.icon}</DockIcon>
             <DockLabel>{item.label}</DockLabel>

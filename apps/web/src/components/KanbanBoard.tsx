@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useRealtimeBoard, Card, List } from "../hooks/useRealtimeBoard";
-import { Plus, X, AlignLeft, Calendar, User, Eye, Wifi, WifiOff } from "lucide-react";
+import { Plus, X, AlignLeft, Calendar, User, Eye, Wifi, WifiOff, Trash2 } from "lucide-react";
 
 interface KanbanCardProps {
   card: Card;
@@ -156,18 +156,44 @@ interface KanbanListProps {
   list: List;
   onCardClick: (card: Card, listId: string) => void;
   onAddCard: (listId: string, title: string) => void;
+  onDeleteList: (listId: string) => void;
 }
 
 const KanbanList = React.memo(
-  ({ list, onCardClick, onAddCard }: KanbanListProps) => {
+  ({ list, onCardClick, onAddCard, onDeleteList }: KanbanListProps) => {
+    const isMandatory = ["todo", "in progress", "done"].includes(list.name.toLowerCase());
+
     return (
       <div className="w-72 bg-slate-900/40 border border-slate-850 rounded-xl flex flex-col max-h-[calc(100vh-200px)] shadow-lg">
         {/* List Header */}
-        <div className="p-3.5 flex justify-between items-center border-b border-slate-850/60 bg-slate-900/60 rounded-t-xl">
-          <span className="text-sm font-bold text-slate-200">{list.name}</span>
-          <span className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full font-mono">
-            {list.cards.length}
-          </span>
+        <div className="p-3.5 flex justify-between items-center border-b border-slate-850/60 bg-slate-900/60 rounded-t-xl gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-sm font-bold text-slate-200 truncate">{list.name}</span>
+            {isMandatory && (
+              <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-slate-800/80 text-zinc-400 border border-slate-700 rounded uppercase tracking-wider" title="Mandatory Core Column">
+                Core
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full font-mono">
+              {list.cards.length}
+            </span>
+            {!isMandatory && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Delete additional column "${list.name}" and its tasks?`)) {
+                    onDeleteList(list.id);
+                  }
+                }}
+                className="p-1 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded transition cursor-pointer"
+                title="Delete this custom column"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Cards Container */}
@@ -208,7 +234,8 @@ const KanbanList = React.memo(
       prev.list.position !== next.list.position ||
       prev.list.cards.length !== next.list.cards.length ||
       prev.onCardClick !== next.onCardClick ||
-      prev.onAddCard !== next.onAddCard
+      prev.onAddCard !== next.onAddCard ||
+      prev.onDeleteList !== next.onDeleteList
     ) {
       return false;
     }
@@ -278,10 +305,11 @@ interface KanbanGridProps {
   onCardClick: (card: Card, listId: string) => void;
   onAddCard: (listId: string, title: string) => void;
   onAddList: (name: string) => void;
+  onDeleteList: (listId: string) => void;
   onDragEnd: (result: DropResult) => void;
 }
 
-const KanbanGrid = React.memo(({ lists, onCardClick, onAddCard, onAddList, onDragEnd }: KanbanGridProps) => {
+const KanbanGrid = React.memo(({ lists, onCardClick, onAddCard, onAddList, onDeleteList, onDragEnd }: KanbanGridProps) => {
   return (
     <div className="flex-1 overflow-x-auto p-6 bg-slate-950 flex gap-6 items-start">
       <DragDropContext onDragEnd={onDragEnd}>
@@ -291,6 +319,7 @@ const KanbanGrid = React.memo(({ lists, onCardClick, onAddCard, onAddList, onDra
             list={list}
             onCardClick={onCardClick}
             onAddCard={onAddCard}
+            onDeleteList={onDeleteList}
           />
         ))}
       </DragDropContext>
@@ -313,10 +342,25 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
     userName,
     updateCursor,
     addList,
+    deleteList,
     addCard,
     moveCard,
     updateCardField,
+    clearAllCards,
+    clearCustomLists,
   } = useRealtimeBoard(boardId);
+
+  // Check if current user is Admin
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    const stored = localStorage.getItem("collab-pm-user");
+    if (stored) {
+      try {
+        const user = JSON.parse(stored);
+        if (user.role === "Admin") setIsAdmin(true);
+      } catch (e) {}
+    }
+  }, []);
 
   // Selected Card for Detail Modal
   const [selectedCard, setSelectedCard] = useState<{ card: Card; listId: string } | null>(null);
@@ -397,6 +441,35 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
               </>
             )}
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2 ml-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("⚠️ Admin Action: Are you sure you want to clear ALL task cards across all columns?")) {
+                    clearAllCards();
+                  }
+                }}
+                className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition shadow-md shadow-rose-900/20 flex items-center gap-1.5 cursor-pointer"
+                title="Admin: Clear all tasks on the board"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear Tasks
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("⚠️ Admin Action: Delete all user-created custom columns, keeping mandatory columns (Todo, In Progress, Done)?")) {
+                    clearCustomLists();
+                  }
+                }}
+                className="px-3 py-1 bg-amber-600/20 text-amber-300 border border-amber-500/30 hover:bg-amber-600/30 text-xs font-bold rounded-lg transition shadow-md flex items-center gap-1.5 cursor-pointer"
+                title="Admin: Remove all user-created additional columns"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear Custom Columns
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Presence Indicators */}
@@ -425,6 +498,7 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
         onCardClick={handleCardClick}
         onAddCard={addCard}
         onAddList={addList}
+        onDeleteList={deleteList}
         onDragEnd={onDragEnd}
       />
 

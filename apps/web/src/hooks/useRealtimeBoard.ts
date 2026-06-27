@@ -77,8 +77,20 @@ export function useRealtimeBoard(boardId: string) {
   const lastUpdateRef = useRef<number>(0);
   const throttleTimeoutRef = useRef<any>(null);
 
-  // Initialize random client user details
+  // Initialize client user details from stored user session or fallback
   useEffect(() => {
+    const stored = localStorage.getItem("collab-pm-user");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.name) {
+          setUserName(parsed.name);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse user session", e);
+      }
+    }
     const randomName = `User ${Math.floor(Math.random() * 1000)}`;
     setUserName(randomName);
   }, []);
@@ -420,6 +432,65 @@ export function useRealtimeBoard(boardId: string) {
     updateInsights();
   }, [updateState, updateInsights]);
 
+  // Admin Mutation: Clear all task cards from all lists
+  const clearAllCards = useCallback(() => {
+    const doc = docRef.current;
+    if (!doc) return;
+
+    doc.transact(() => {
+      const listsArray = doc.getArray("lists");
+      for (let i = 0; i < listsArray.length; i++) {
+        const listMap = listsArray.get(i);
+        if (listMap instanceof Y.Map) {
+          const cardsArray = listMap.get("cards") as Y.Array<Y.Map<any>>;
+          if (cardsArray) {
+            cardsArray.delete(0, cardsArray.length);
+          }
+        }
+      }
+    });
+    updateState();
+  }, [updateState]);
+
+  // Mutation: Delete an individual list
+  const deleteList = useCallback((listId: string) => {
+    const doc = docRef.current;
+    if (!doc) return;
+
+    doc.transact(() => {
+      const listsArray = doc.getArray("lists");
+      for (let i = 0; i < listsArray.length; i++) {
+        const listMap = listsArray.get(i);
+        if (listMap instanceof Y.Map && listMap.get("id") === listId) {
+          listsArray.delete(i);
+          break;
+        }
+      }
+    });
+    updateState();
+  }, [updateState]);
+
+  // Admin Mutation: Clear all custom additional lists (keeping mandatory: Todo, In Progress, Done)
+  const clearCustomLists = useCallback(() => {
+    const doc = docRef.current;
+    if (!doc) return;
+
+    const mandatory = ["todo", "in progress", "done"];
+    doc.transact(() => {
+      const listsArray = doc.getArray("lists");
+      for (let i = listsArray.length - 1; i >= 0; i--) {
+        const listMap = listsArray.get(i);
+        if (listMap instanceof Y.Map) {
+          const name = String(listMap.get("name") || "").toLowerCase();
+          if (!mandatory.includes(name)) {
+            listsArray.delete(i);
+          }
+        }
+      }
+    });
+    updateState();
+  }, [updateState]);
+
   return {
     lists,
     collaborators,
@@ -428,9 +499,12 @@ export function useRealtimeBoard(boardId: string) {
     aiInsights,
     updateCursor,
     addList,
+    deleteList,
     addCard,
     moveCard,
     updateCardField,
     acceptAssignment,
+    clearAllCards,
+    clearCustomLists,
   };
 }

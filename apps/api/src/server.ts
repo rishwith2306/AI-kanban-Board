@@ -8,7 +8,7 @@ import { WebSocketServer } from "ws";
 import { db, users, workspaces, boards, lists, cards, weeklyDigests, aiInsights } from "@collab-pm/db";
 import { eq, desc } from "drizzle-orm";
 import { initWebSocketServer, addYjsCard } from "./websocket";
-import { queueBoardAudit, queueComplexityInference } from "./ai/queue";
+import { queueBoardAudit, queueComplexityInference, scheduleBoardAudit } from "./ai/queue";
 import { aiWorker } from "./ai/worker"; // Start the BullMQ worker process
 
 // Ensure the worker is started
@@ -54,6 +54,7 @@ app.post("/api/board", async (req, res) => {
           id: defaultUserId,
           email: "admin@collabpm.com",
           name: "Administrator",
+          role: "Admin",
         });
       }
 
@@ -112,6 +113,10 @@ app.post("/api/board", async (req, res) => {
         position: 0,
       },
     ]);
+
+    // Schedule repeatable board audit and trigger initial run
+    await scheduleBoardAudit(boardId);
+    await queueBoardAudit(boardId);
 
     res.json({ status: "created", boardId });
   } catch (error: any) {
@@ -366,6 +371,17 @@ server.on("upgrade", (request, socket, head) => {
 // Initialize WebSocket Yjs setup
 initWebSocketServer(wss);
 
-server.listen(port, () => {
+server.listen(port, async () => {
   console.log(`HTTP and WebSocket server running on http://localhost:${port}`);
+
+  // Schedule repeatable board audits for all existing boards
+  try {
+    const allBoards = await db.select().from(boards);
+    for (const b of allBoards) {
+      await scheduleBoardAudit(b.id);
+      await queueBoardAudit(b.id);
+    }
+  } catch (err) {
+    console.error("Failed to schedule repeatable board audits on startup:", err);
+  }
 });
