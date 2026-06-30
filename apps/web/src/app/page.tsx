@@ -48,6 +48,8 @@ export default function Home() {
   const [loginName, setLoginName] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginRole, setLoginRole] = useState("Engineer");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [systemUsers, setSystemUsers] = useState<{ id: string; name: string; email: string; role: string }[]>([]);
 
   const defaultBoardId = "d3b07384-d113-4c90-a5c9-959c25fdf299";
 
@@ -91,6 +93,14 @@ export default function Home() {
       .catch((err) => console.error("Board seeding failed:", err));
   }, []);
 
+  // Fetch all system users
+  useEffect(() => {
+    fetch("http://localhost:4000/api/users")
+      .then((res) => res.json())
+      .then((data) => setSystemUsers(data))
+      .catch((err) => console.error("Failed to fetch system users", err));
+  }, [user]);
+
   // Trigger manual board audit
   const triggerAudit = async () => {
     setAuditLoading(true);
@@ -119,18 +129,12 @@ export default function Home() {
   // Compute Team Load dynamically from active cards in Yjs
   const computeTeamLoad = () => {
     const loadMap: { [userId: string]: { name: string; taskCount: number; points: number } } = {};
-    
-    // We mock collaborator names since they are saved in board data
-    const mockUsersMap: { [id: string]: string } = {
-      "user-1": "Alice Chen",
-      "user-2": "Bob Johnson",
-      "user-3": "Sarah Miller",
-    };
 
     lists.forEach((list) => {
       list.cards.forEach((card) => {
         if (card.assigneeId) {
-          const assigneeName = mockUsersMap[card.assigneeId] || `Collaborator (${card.assigneeId.slice(0,4)})`;
+          const systemUser = systemUsers.find((u) => u.id === card.assigneeId);
+          const assigneeName = systemUser ? systemUser.name : `Collaborator (${card.assigneeId.slice(0,4)})`;
           if (!loadMap[card.assigneeId]) {
             loadMap[card.assigneeId] = { name: assigneeName, taskCount: 0, points: 0 };
           }
@@ -201,7 +205,7 @@ export default function Home() {
   };
 
   // Auth Submit Handlers
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginName.trim()) {
       alert("Please enter your name.");
@@ -211,13 +215,59 @@ export default function Home() {
       alert("Please enter a valid Gmail / Email address.");
       return;
     }
+
+    // Check admin password
+    if (loginRole === "Admin") {
+      if (!loginPassword.trim()) {
+        alert("Please enter the admin password.");
+        return;
+      }
+      try {
+        const res = await fetch("http://localhost:4000/api/auth/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: loginPassword.trim() }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          alert(data.error || "Incorrect admin password.");
+          return;
+        }
+      } catch (err: any) {
+        alert(`Admin verification failed: ${err.message}`);
+        return;
+      }
+    }
+
     const newUser = { name: loginName.trim(), email: loginEmail.trim(), role: loginRole };
-    localStorage.setItem("collab-pm-user", JSON.stringify(newUser));
-    setUser(newUser);
-    setActiveTab("board");
+
+    try {
+      const res = await fetch("http://localhost:4000/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
+      if (!res.ok) throw new Error("Failed to sync user on backend");
+      
+      const savedUser = await res.json();
+      localStorage.setItem("collab-pm-user", JSON.stringify(savedUser));
+      setUser(savedUser);
+
+      // Refresh users list
+      const usersRes = await fetch("http://localhost:4000/api/users");
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setSystemUsers(usersData);
+      }
+
+      setActiveTab("board");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Login failed: ${err.message}`);
+    }
   };
 
-  const handleSignupComplete = () => {
+  const handleSignupComplete = async () => {
     if (!signupName.trim()) {
       alert("Name is mandatory! Please enter your full name in Step 2.");
       return;
@@ -226,14 +276,38 @@ export default function Home() {
       alert("Gmail/Email is mandatory! Please enter a valid email address in Step 2.");
       return;
     }
+    const userId = crypto.randomUUID();
     const newUser = {
+      id: userId,
       name: signupName.trim(),
       email: signupEmail.trim(),
       role: signupRole
     };
-    localStorage.setItem("collab-pm-user", JSON.stringify(newUser));
-    setUser(newUser);
-    setActiveTab("board");
+
+    try {
+      const res = await fetch("http://localhost:4000/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
+      if (!res.ok) throw new Error("Failed to register user on backend");
+      
+      const savedUser = await res.json();
+      localStorage.setItem("collab-pm-user", JSON.stringify(savedUser));
+      setUser(savedUser);
+
+      // Refresh users list
+      const usersRes = await fetch("http://localhost:4000/api/users");
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setSystemUsers(usersData);
+      }
+
+      setActiveTab("board");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Signup failed: ${err.message}`);
+    }
   };
 
   // Navigation configurations
@@ -470,6 +544,19 @@ export default function Home() {
                           className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
                         />
                       </div>
+                      {loginRole === "Admin" && (
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                          <input
+                            type="password"
+                            required
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            placeholder="Admin Password *"
+                            className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <button

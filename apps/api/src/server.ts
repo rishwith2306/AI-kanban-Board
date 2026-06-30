@@ -173,6 +173,61 @@ app.get("/api/board/:id/digest", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+/**
+ * Admin Authentication Verification
+ */
+app.post("/api/auth/admin", (req, res) => {
+  const { password } = req.body;
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+  if (password === adminPassword) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: "Incorrect admin password" });
+  }
+});
+
+/**
+ * Register / Sync User details in database
+ */
+app.post("/api/users", async (req, res) => {
+  const { id, name, email, role } = req.body;
+  if (!name || !email) {
+    res.status(400).json({ error: "name and email are required" });
+    return;
+  }
+  try {
+    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existing.length > 0) {
+      res.json(existing[0]);
+      return;
+    }
+    const userId = id || crypto.randomUUID();
+    await db.insert(users).values({
+      id: userId,
+      name,
+      email,
+      role: role || "Engineer",
+    });
+    res.json({ id: userId, name, email, role: role || "Engineer" });
+  } catch (err: any) {
+    console.error("User registration sync error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Retrieve all registered users in the database
+ */
+app.get("/api/users", async (_req, res) => {
+  try {
+    const allUsers = await db.select().from(users);
+    res.json(allUsers);
+  } catch (err: any) {
+    console.error("Retrieve users list error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 /**
  * Retrieve all boards (for extension)

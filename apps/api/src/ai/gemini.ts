@@ -1,13 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-
-// Initialize Google Gen AI only if API key is present
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+const apiKey = process.env.GEMINI_API_KEY || "";
+const genAI = new GoogleGenerativeAI(apiKey);
 
 // Helper to check if AI is enabled
 export function isAIEnabled(): boolean {
-  return genAI !== null;
+  return apiKey !== "";
 }
 
 /**
@@ -17,17 +15,6 @@ export async function inferComplexity(
   title: string,
   description: string
 ): Promise<{ complexity: string; reason: string }> {
-  if (!genAI) {
-    // Return mock response
-    console.warn("GEMINI_API_KEY is not defined. Using mock complexity response.");
-    const mockPoints = ["1 pt", "2 pts", "3 pts", "5 pts"];
-    const points = mockPoints[Math.floor(Math.random() * mockPoints.length)];
-    return {
-      complexity: points,
-      reason: `(Mocked) Inferred complexity based on task scope details in title '${title}'.`,
-    };
-  }
-
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `
@@ -106,46 +93,6 @@ export interface BoardAuditResult {
 }
 
 export async function analyzeBoardState(boardData: BoardData): Promise<BoardAuditResult> {
-  if (!genAI) {
-    console.warn("GEMINI_API_KEY is not defined. Using mock board audit response.");
-    
-    // Create sensible mock data
-    const firstList = boardData.lists[0];
-    const unassignedCard = boardData.lists
-      .flatMap((l) => l.cards)
-      .find((c) => !c.assigneeId);
-    
-    const suggestedAssignee = boardData.collaborators[0] || { id: "mock-user-id", name: "Alice" };
-
-    return {
-      bottlenecks: [
-        {
-          columnName: firstList?.name || "In Progress",
-          count: firstList?.cards?.length || 4,
-          riskLevel: "Medium",
-          likelyCause: "(Mocked) High card count with uneven assignee distribution.",
-        },
-      ],
-      sprintRisk: {
-        riskLevel: boardData.sprintEndDate ? "Medium" : "Low",
-        summary: boardData.sprintEndDate
-          ? `(Mocked) Board velocity check: 5 cards remaining before deadline on ${new Date(boardData.sprintEndDate).toLocaleDateString()}.`
-          : "(Mocked) No sprint end date set, risk is nominal.",
-      },
-      assignmentSuggestions: unassignedCard
-        ? [
-            {
-              cardId: unassignedCard.id,
-              cardTitle: unassignedCard.title,
-              suggestedAssigneeId: suggestedAssignee.id,
-              suggestedAssigneeName: suggestedAssignee.name,
-              reason: `(Mocked) Suggesting ${suggestedAssignee.name} based on historical card completion patterns for similar tasks.`,
-            },
-          ]
-        : [],
-    };
-  }
-
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `
@@ -209,29 +156,6 @@ export async function generateWeeklyDigest(
   boardData: BoardData,
   auditResult: BoardAuditResult
 ): Promise<string> {
-  if (!genAI) {
-    console.warn("GEMINI_API_KEY is not defined. Using mock Weekly Digest.");
-    return `
-# Weekly Sprint Digest: ${boardData.boardName} *(Mocked)*
-
-## 📊 Board Summary
-- **Total active lists:** ${boardData.lists.length}
-- **Total active cards:** ${boardData.lists.flatMap(l => l.cards).length}
-- **Sprint Schedule:** ${boardData.sprintStartDate ? new Date(boardData.sprintStartDate).toLocaleDateString() : "N/A"} to ${boardData.sprintEndDate ? new Date(boardData.sprintEndDate).toLocaleDateString() : "N/A"}
-
-## ⚠️ Key Bottlenecks Identified
-${auditResult.bottlenecks.map(b => `- **Column: ${b.columnName}** (${b.count} tasks) - *${b.riskLevel} Risk*: ${b.likelyCause}`).join('\n')}
-
-## 🚀 Velocity & Sprint Risks
-- **Risk Level:** **${auditResult.sprintRisk.riskLevel}**
-- **Analysis:** ${auditResult.sprintRisk.summary}
-
-## 💡 Recommendations
-1. Assign outstanding items to balance user workloads.
-2. Unblock bottleneck tasks to keep team momentum high.
-`;
-  }
-
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `

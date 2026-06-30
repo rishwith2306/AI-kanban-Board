@@ -314,10 +314,11 @@ export function useRealtimeBoard(boardId: string) {
     if (!doc) return;
 
     const listsArray = doc.getArray("lists");
-    let cardToMove: Y.Map<any> | null = null;
+    let clonedCardMap: Y.Map<any> | null = null;
 
     doc.transact(() => {
-      // 1. Remove card from original list
+      // 1. Find and clone the card from original list
+      let found = false;
       for (let i = 0; i < listsArray.length; i++) {
         const listMap = listsArray.get(i);
         if (listMap instanceof Y.Map && listMap.get("id") === fromListId) {
@@ -325,28 +326,60 @@ export function useRealtimeBoard(boardId: string) {
           for (let j = 0; j < cardsArray.length; j++) {
             const cardMap = cardsArray.get(j);
             if (cardMap instanceof Y.Map && cardMap.get("id") === cardId) {
-              cardToMove = cardMap;
+              // Clone all card properties
+              clonedCardMap = new Y.Map();
+              clonedCardMap.set("id", cardMap.get("id"));
+              
+              const titleText = new Y.Text();
+              const originalTitle = cardMap.get("title");
+              titleText.insert(0, originalTitle ? originalTitle.toString() : "");
+              clonedCardMap.set("title", titleText);
+
+              const descText = new Y.Text();
+              const originalDesc = cardMap.get("description");
+              descText.insert(0, originalDesc ? originalDesc.toString() : "");
+              clonedCardMap.set("description", descText);
+
+              clonedCardMap.set("position", newPosition);
+              clonedCardMap.set("assigneeId", cardMap.get("assigneeId"));
+              clonedCardMap.set("dueDate", cardMap.get("dueDate"));
+              clonedCardMap.set("aiComplexityEstimate", cardMap.get("aiComplexityEstimate"));
+              clonedCardMap.set("aiSprintRisk", cardMap.get("aiSprintRisk"));
+
+              const tagsArray = new Y.Array();
+              const originalTags = cardMap.get("aiTags");
+              if (originalTags instanceof Y.Array) {
+                tagsArray.insert(0, originalTags.toArray());
+              } else if (Array.isArray(originalTags)) {
+                tagsArray.insert(0, originalTags);
+              }
+              clonedCardMap.set("aiTags", tagsArray);
+
+              // Delete card from original list
               cardsArray.delete(j);
+              found = true;
               break;
             }
           }
           
-          // Re-index remaining cards in source list
-          for (let j = 0; j < cardsArray.length; j++) {
-            cardsArray.get(j).set("position", j);
+          if (found) {
+            // Re-index remaining cards in source list
+            for (let j = 0; j < cardsArray.length; j++) {
+              cardsArray.get(j).set("position", j);
+            }
+            break;
           }
-          break;
         }
       }
 
-      // 2. Insert card into target list at newPosition
-      if (cardToMove) {
+      // 2. Insert cloned card into target list at newPosition
+      if (clonedCardMap) {
         for (let i = 0; i < listsArray.length; i++) {
           const listMap = listsArray.get(i);
           if (listMap instanceof Y.Map && listMap.get("id") === toListId) {
             const cardsArray = listMap.get("cards") as Y.Array<Y.Map<any>>;
             
-            cardsArray.insert(newPosition, [cardToMove]);
+            cardsArray.insert(newPosition, [clonedCardMap]);
 
             // Re-index all cards in target list
             for (let j = 0; j < cardsArray.length; j++) {
