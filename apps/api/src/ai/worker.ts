@@ -122,9 +122,28 @@ async function handleBoardAudit(job: Job) {
   }
 
   // Fetch Board collaborators (mock or query users)
-  // For standard usage, we'll suggest from all users in the system
+  // Resolve active connected users via Yjs awareness
   const dbUsers = await db.select().from(users);
-  const collaborators = dbUsers.map((u) => ({
+  const connectedUserNames: string[] = [];
+  const doc = docs.get(boardId);
+  if (doc && doc.awareness) {
+    const states = doc.awareness.getStates();
+    states.forEach((state: any) => {
+      if (state.user && state.user.name) {
+        connectedUserNames.push(state.user.name.trim().toLowerCase());
+      }
+    });
+  }
+
+  // Filter dbUsers by connected names if anyone is currently active
+  let activeUsers = dbUsers;
+  if (connectedUserNames.length > 0) {
+    activeUsers = dbUsers.filter((u) =>
+      connectedUserNames.includes(u.name.trim().toLowerCase())
+    );
+  }
+
+  const collaborators = activeUsers.map((u) => ({
     id: u.id,
     name: u.name || u.email,
   }));

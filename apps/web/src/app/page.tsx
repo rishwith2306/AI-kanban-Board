@@ -50,6 +50,7 @@ export default function Home() {
   const [loginRole, setLoginRole] = useState("Engineer");
   const [loginPassword, setLoginPassword] = useState("");
   const [systemUsers, setSystemUsers] = useState<{ id: string; name: string; email: string; role: string }[]>([]);
+  const [loginStep, setLoginStep] = useState<"choose-role" | "admin-auth" | "user-auth">("choose-role");
 
   const defaultBoardId = "d3b07384-d113-4c90-a5c9-959c25fdf299";
 
@@ -128,27 +129,79 @@ export default function Home() {
 
   // Compute Team Load dynamically from active cards in Yjs
   const computeTeamLoad = () => {
-    const loadMap: { [userId: string]: { name: string; taskCount: number; points: number } } = {};
+    const loadMap: { 
+      [userId: string]: { 
+        name: string; 
+        taskCount: number; 
+        points: number; 
+        totalCount: number; 
+        doneCount: number; 
+        tags: string[] 
+      } 
+    } = {};
 
     lists.forEach((list) => {
+      const isDone = list.name.toLowerCase() === "done";
       list.cards.forEach((card) => {
         if (card.assigneeId) {
           const systemUser = systemUsers.find((u) => u.id === card.assigneeId);
           const assigneeName = systemUser ? systemUser.name : `Collaborator (${card.assigneeId.slice(0,4)})`;
           if (!loadMap[card.assigneeId]) {
-            loadMap[card.assigneeId] = { name: assigneeName, taskCount: 0, points: 0 };
+            loadMap[card.assigneeId] = { 
+              name: assigneeName, 
+              taskCount: 0, 
+              points: 0, 
+              totalCount: 0, 
+              doneCount: 0, 
+              tags: [] 
+            };
           }
-          loadMap[card.assigneeId].taskCount += 1;
           
-          // Parse complexity points (e.g. "3 pts" -> 3)
-          const ptsMatch = card.aiComplexityEstimate?.match(/(\d+)/);
-          const pts = ptsMatch ? parseInt(ptsMatch[1], 10) : 1;
-          loadMap[card.assigneeId].points += pts;
+          loadMap[card.assigneeId].totalCount += 1;
+          if (isDone) {
+            loadMap[card.assigneeId].doneCount += 1;
+          } else {
+            loadMap[card.assigneeId].taskCount += 1;
+            
+            // Parse complexity points (e.g. "3 pts" -> 3)
+            const ptsMatch = card.aiComplexityEstimate?.match(/(\d+)/);
+            const pts = ptsMatch ? parseInt(ptsMatch[1], 10) : 1;
+            loadMap[card.assigneeId].points += pts;
+          }
+
+          if (card.aiTags && card.aiTags.length > 0) {
+            loadMap[card.assigneeId].tags.push(...card.aiTags);
+          }
         }
       });
     });
 
-    return Object.values(loadMap);
+    return Object.values(loadMap).map((member) => {
+      const completionRate = member.totalCount > 0 
+        ? Math.round((member.doneCount / member.totalCount) * 100) 
+        : 0;
+
+      const tagFrequencies: { [tag: string]: number } = {};
+      member.tags.forEach((t) => {
+        tagFrequencies[t] = (tagFrequencies[t] || 0) + 1;
+      });
+
+      const sortedTags = Object.entries(tagFrequencies)
+        .sort((a, b) => b[1] - a[1])
+        .map((entry) => entry[0]);
+
+      const specialization = sortedTags.length > 0 
+        ? sortedTags.slice(0, 2).join(", ") 
+        : "Generalist";
+
+      return {
+        name: member.name,
+        taskCount: member.taskCount,
+        points: member.points,
+        completionRate,
+        specialization,
+      };
+    });
   };
 
   const teamLoads = computeTeamLoad();
@@ -314,7 +367,7 @@ export default function Home() {
   const pillNavItems = [
     { label: "Home", href: "#home", onClick: () => setActiveTab("home") },
     { label: "Features", href: "#features", onClick: () => setActiveTab("features") },
-    { label: "Login", href: "#login", onClick: () => setActiveTab("login") },
+    { label: "Login", href: "#login", onClick: () => { setActiveTab("login"); setLoginStep("choose-role"); } },
     { label: "Sign Up", href: "#signup", onClick: () => setActiveTab("signup") }
   ];
 
@@ -490,61 +543,46 @@ export default function Home() {
                     <p className="text-xs text-slate-400 mt-1.5">Sign in to your collaborative board</p>
                   </div>
 
-                  {/* Role toggle (Standard vs Admin Login) */}
-                  <div className="flex bg-slate-950/80 p-1 rounded-lg border border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setLoginRole("Engineer")}
-                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition cursor-pointer ${
-                        loginRole !== "Admin"
-                          ? "bg-slate-800 text-white shadow"
-                          : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      User Login
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLoginRole("Admin");
-                        if (!loginEmail) setLoginEmail("admin@collabpm.com");
-                        if (!loginName) setLoginName("Administrator");
-                      }}
-                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition cursor-pointer flex items-center justify-center gap-1 ${
-                        loginRole === "Admin"
-                          ? "bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow"
-                          : "text-slate-400 hover:text-purple-300"
-                      }`}
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 text-purple-400" /> Admin Login
-                    </button>
-                  </div>
+                  {loginStep === "choose-role" && (
+                    <div className="space-y-4">
+                      <div className="text-center text-xs text-slate-400 font-medium pb-1">
+                        Choose login method:
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoginRole("Engineer");
+                          setLoginName("");
+                          setLoginEmail("");
+                          setLoginStep("user-auth");
+                        }}
+                        className="w-full p-4 rounded-xl border border-slate-800 hover:border-zinc-500/50 bg-slate-950/80 hover:bg-slate-900/80 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <UserIcon className="w-4 h-4 text-slate-400" />
+                        Standard User Login
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoginRole("Admin");
+                          setLoginName("Administrator");
+                          setLoginEmail("admin@collabpm.com");
+                          setLoginStep("admin-auth");
+                        }}
+                        className="w-full p-4 rounded-xl border border-purple-900/40 hover:border-purple-500 bg-purple-950/10 hover:bg-purple-900/20 text-purple-300 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-purple-400" />
+                        Admin Login
+                      </button>
+                    </div>
+                  )}
 
-                  <form onSubmit={handleLoginSubmit} className="space-y-4">
-                    <div className="space-y-3.5">
-                      <div className="relative">
-                        <UserIcon className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                        <input
-                          type="text"
-                          required
-                          value={loginName}
-                          onChange={(e) => setLoginName(e.target.value)}
-                          placeholder="Your Full Name *"
-                          className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
-                        />
+                  {loginStep === "admin-auth" && (
+                    <form onSubmit={handleLoginSubmit} className="space-y-4">
+                      <div className="text-center text-xs text-purple-300 font-bold flex items-center justify-center gap-1">
+                        <ShieldCheck className="w-4 h-4" /> Admin Portal
                       </div>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                        <input
-                          type="email"
-                          required
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          placeholder="Gmail / Email Address *"
-                          className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
-                        />
-                      </div>
-                      {loginRole === "Admin" && (
+                      <div className="space-y-3.5">
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
                           <input
@@ -552,24 +590,72 @@ export default function Home() {
                             required
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            placeholder="Admin Password *"
+                            placeholder="Enter Admin Password *"
                             className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                           />
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    <button
-                      type="submit"
-                      className={`w-full py-2.5 text-xs font-bold rounded-lg transition shadow-lg cursor-pointer flex items-center justify-center gap-1.5 ${
-                        loginRole === "Admin"
-                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-900/20"
-                          : "bg-zinc-200 hover:bg-white text-black shadow-zinc-200/10"
-                      }`}
-                    >
-                      <Lock className="w-3.5 h-3.5" /> {loginRole === "Admin" ? "Sign In as Admin" : "Sign In"}
-                    </button>
-                  </form>
+                      <button
+                        type="submit"
+                        className="w-full py-2.5 text-xs font-bold rounded-lg transition shadow-lg cursor-pointer flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-900/20"
+                      >
+                        <Lock className="w-3.5 h-3.5" /> Sign In as Admin
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLoginStep("choose-role")}
+                        className="w-full py-2 text-xs font-semibold rounded-lg border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer"
+                      >
+                        Back
+                      </button>
+                    </form>
+                  )}
+
+                  {loginStep === "user-auth" && (
+                    <form onSubmit={handleLoginSubmit} className="space-y-4">
+                      <div className="space-y-3.5">
+                        <div className="relative">
+                          <UserIcon className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                          <input
+                            type="text"
+                            required
+                            value={loginName}
+                            onChange={(e) => setLoginName(e.target.value)}
+                            placeholder="Your Full Name *"
+                            className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
+                          />
+                        </div>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                          <input
+                            type="email"
+                            required
+                            value={loginEmail}
+                            onChange={(e) => setLoginEmail(e.target.value)}
+                            placeholder="Gmail / Email Address *"
+                            className="w-full bg-slate-950/80 text-white border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-zinc-400"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-2.5 text-xs font-bold rounded-lg transition shadow-lg cursor-pointer flex items-center justify-center gap-1.5 bg-zinc-200 hover:bg-white text-black shadow-zinc-200/10"
+                      >
+                        Sign In
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLoginStep("choose-role")}
+                        className="w-full py-2 text-xs font-semibold rounded-lg border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer"
+                      >
+                        Back
+                      </button>
+                    </form>
+                  )}
 
                   <div className="text-center">
                     <span className="text-[10px] text-slate-500">
@@ -955,6 +1041,22 @@ export default function Home() {
                             {load.points} pts
                           </span>
                         </div>
+                        {user?.role === "Admin" && (
+                          <>
+                            <div className="flex justify-between items-center text-xs text-slate-400 border-t border-slate-800/20 pt-2">
+                              <span>Completion Rate:</span>
+                              <span className="font-mono text-xs font-bold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+                                {load.completionRate}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs text-slate-400">
+                              <span>Specialization:</span>
+                              <span className="text-xs font-semibold text-purple-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-850 max-w-[155px] truncate" title={load.specialization}>
+                                {load.specialization}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
