@@ -8,7 +8,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "http://localhost:4000/*"
+    "http://localhost:4000/*",
+    "https://kanban-assignment.cytieq.com/*"
   ],
   "action": {
     "default_popup": "popup.html"

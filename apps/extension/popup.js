@@ -15,16 +15,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const closeSettingsBtn = document.getElementById("closeSettingsBtn");
   const saveSettingsBtn = document.getElementById("saveSettingsBtn");
   const apiHostInput = document.getElementById("apiHostInput");
-  const retryConnectionBtn = document.getElementById("retryConnectionBtn");
-  const connectionIndicator = document.getElementById("connectionIndicator");
-  const connectionText = document.getElementById("connectionText");
-  const offlineBanner = document.getElementById("offlineBanner");
 
   const formContent = document.getElementById("formContent");
   const successView = document.getElementById("successView");
 
   let activeTabUrl = "";
-  let apiHost = localStorage.getItem("collabpm_api_host") || "http://localhost:4000";
+  let apiHost = localStorage.getItem("collabpm_api_host") || "https://kanban-assignment.cytieq.com";
 
   // Pre-fill input value
   apiHostInput.value = apiHost;
@@ -46,15 +42,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       settingsPanel.classList.remove("active");
       initClipper();
     }
-  });
-
-  retryConnectionBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    initClipper();
-  });
-
-  connectionIndicator.addEventListener("click", () => {
-    initClipper();
   });
 
   function setDefaultContext(url) {
@@ -115,21 +102,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     boardSelect.innerHTML = '<option value="">Fetching boards...</option>';
     boardSelectContainer.classList.add("hidden");
     boardSkeleton.classList.remove("hidden");
-    
+
     listSelect.innerHTML = '<option value="">Choose board first...</option>';
     listSelectContainer.classList.add("hidden");
     listSkeleton.classList.remove("hidden");
-
-    const isConnected = await checkConnection();
-    if (!isConnected) {
-      boardSkeleton.classList.add("hidden");
-      listSkeleton.classList.add("hidden");
-      boardSelectContainer.classList.remove("hidden");
-      listSelectContainer.classList.remove("hidden");
-      boardSelect.innerHTML = '<option value="">Backend offline</option>';
-      listSelect.innerHTML = '<option value="">Backend offline</option>';
-      return;
-    }
 
     try {
       const res = await fetch(`${apiHost}/api/boards`);
@@ -145,7 +121,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } catch (err) {
       statusMsg.className = "message error";
-      statusMsg.textContent = "Error fetching boards.";
+      statusMsg.textContent = "Error fetching boards. Is backend offline?";
+      boardSelect.innerHTML = '<option value="">Failed to connect</option>';
+      listSelect.innerHTML = '<option value="">Failed to connect</option>';
       console.error(err);
     } finally {
       boardSkeleton.classList.add("hidden");
@@ -155,38 +133,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  async function checkConnection() {
-    connectionIndicator.className = "status-indicator checking";
-    connectionText.textContent = "Checking";
-    offlineBanner.classList.add("hidden");
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    
-    try {
-      const res = await fetch(`${apiHost}/api/boards`, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        connectionIndicator.className = "status-indicator online";
-        connectionText.textContent = "Online";
-        offlineBanner.classList.add("hidden");
-        return true;
-      }
-    } catch (err) {
-      clearTimeout(timeoutId);
-      console.error("API connection test failed:", err);
-    }
-    
-    connectionIndicator.className = "status-indicator offline";
-    connectionText.textContent = "Offline";
-    offlineBanner.classList.remove("hidden");
-    return false;
-  }
-
   // 3. Handle Board selection changes to load columns (lists)
   boardSelect.addEventListener("change", async () => {
     const boardId = boardSelect.value;
-    
+
     // Reset columns select and show skeleton
     listSelect.innerHTML = '<option value="">Fetching columns...</option>';
     listSelectContainer.classList.add("hidden");
@@ -256,7 +206,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       formContent.classList.add("hidden");
       successView.classList.remove("hidden");
       statusMsg.className = "hidden";
-      
+
       setTimeout(() => {
         window.close();
       }, 1800);
