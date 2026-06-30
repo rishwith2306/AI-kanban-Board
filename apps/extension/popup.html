@@ -2,124 +2,659 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      width: 320px;
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #0b0f19;
-      color: #f1f5f9;
-      padding: 16px;
+    :root {
+      --bg-main: #060913;
+      --bg-card: #0d1220;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --font-family-title: 'Outfit', sans-serif;
+      --font-family-body: 'Inter', sans-serif;
     }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 360px;
+      min-height: 460px;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family-body);
+      font-size: 13.5px;
+      line-height: 1.5;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Settings drawer panel */
+    .settings-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(6, 9, 19, 0.98);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(-100%);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    .settings-panel.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .settings-header h3 {
+      font-family: var(--font-family-title);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .input-with-action {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .input-with-action input {
+      flex: 1;
+    }
+
+    .helper-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      display: block;
+    }
+
+    /* Header */
     .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 16px;
     }
+
+    .logo-icon {
+      color: #6366f1;
+      filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.5));
+      animation: logo-glow 6s ease-in-out infinite;
+    }
+
+    @keyframes logo-glow {
+      0%, 100% { filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.4)); }
+      50% { filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8)); }
+    }
+
     .header h2 {
+      font-family: var(--font-family-title);
       font-size: 16px;
       font-weight: 800;
-      margin: 0;
-      background: linear-gradient(to right, #6366f1, #a855f7);
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .label {
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Icon button */
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background-color: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Connection status indicator */
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .status-indicator:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-indicator.online .status-dot {
+      background-color: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+
+    .status-indicator.offline .status-dot {
+      background-color: var(--error);
+      box-shadow: 0 0 6px var(--error);
+    }
+
+    .status-indicator.checking .status-dot {
+      background-color: var(--warning);
+      animation: pulse-dot 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 4px var(--warning); }
+      50% { transform: scale(1.3); opacity: 0.5; box-shadow: 0 0 8px var(--warning); }
+    }
+
+    /* Offline Banner */
+    .offline-banner {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      font-size: 11.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fca5a5;
+    }
+
+    .offline-banner a {
+      color: #f87171;
+      text-decoration: underline;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .offline-banner a:hover {
+      color: #ef4444;
+    }
+
+    /* Context Badge */
+    .context-badge {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 20px;
       font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-blue {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    /* Form control styles */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .label {
+      font-family: var(--font-family-title);
+      font-size: 10.5px;
       font-weight: 700;
       color: #818cf8;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       display: block;
     }
-    .form-group {
-      margin-bottom: 12px;
+
+    .input-container {
+      position: relative;
     }
+
     input[type="text"], textarea, select {
       width: 100%;
       box-sizing: border-box;
-      background-color: #020617;
-      border: 1px border solid #1e293b;
-      border-radius: 6px;
-      color: #e2e8f0;
-      padding: 8px 10px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 9px 12px;
+      font-family: var(--font-family-body);
       font-size: 13px;
       outline: none;
-      transition: border-color 0.15s ease;
+      transition: all 0.2s ease;
     }
+
     input[type="text"]:focus, textarea:focus, select:focus {
-      border-color: #6366f1;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+      background-color: rgba(13, 18, 32, 0.4);
     }
+
     textarea {
       resize: none;
-      height: 80px;
+      height: 76px;
+      line-height: 1.4;
     }
+
+    /* Select customizations */
+    .select-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .select-container select {
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .select-arrow {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+      color: var(--text-muted);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: transform 0.2s ease;
+    }
+
+    .select-container select:focus + .select-arrow {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    /* Skeletons */
+    .skeleton {
+      background: linear-gradient(90deg, #0e1424 25%, #1c2642 50%, #0e1424 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite linear;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .skeleton-select {
+      height: 38px;
+      width: 100%;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Buttons */
     .btn {
       width: 100%;
-      background-color: #4f46e5;
+      background: var(--primary-gradient);
       color: white;
       border: none;
-      border-radius: 6px;
-      padding: 10px;
+      border-radius: 8px;
+      padding: 11px;
+      font-family: var(--font-family-title);
       font-weight: 700;
       font-size: 13px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
       cursor: pointer;
-      transition: background-color 0.15s ease;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
+
     .btn:hover {
-      background-color: #4338ca;
+      box-shadow: 0 6px 18px rgba(168, 85, 247, 0.45);
+      transform: translateY(-1px);
     }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+    }
+
     .btn:disabled {
-      background-color: #1e293b;
-      color: #64748b;
+      background: #141c2c;
+      color: #4b5563;
+      border: 1px solid var(--border-color);
+      box-shadow: none;
       cursor: not-allowed;
+      transform: none;
     }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 11px;
+      width: auto;
+    }
+
+    /* Toast Message Banner */
     .message {
-      font-size: 12px;
+      font-size: 11.5px;
       margin-top: 10px;
       text-align: center;
       font-weight: 500;
+      min-height: 18px;
+      transition: all 0.2s ease;
     }
-    .success { color: #10b981; }
-    .error { color: #ef4444; }
+
+    .message.success {
+      color: var(--success);
+    }
+
+    .message.error {
+      color: var(--error);
+      background: rgba(239, 68, 68, 0.05);
+      border-radius: 6px;
+      padding: 6px 10px;
+      border: 1px solid rgba(239, 68, 68, 0.15);
+    }
+
+    /* Success View */
+    .success-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      animation: fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .success-icon-container {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .checkmark-circle {
+      width: 60px;
+      height: 60px;
+      position: relative;
+      border-radius: 50%;
+      border: 4px solid var(--success);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+      animation: check-scale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+    }
+
+    .checkmark-stem {
+      width: 4px;
+      height: 22px;
+      background-color: var(--success);
+      position: absolute;
+      left: 30px;
+      top: 13px;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      opacity: 0;
+      animation: check-stem-draw 0.25s ease 0.35s forwards;
+    }
+
+    .checkmark-kick {
+      width: 11px;
+      height: 4px;
+      background-color: var(--success);
+      position: absolute;
+      left: 19px;
+      top: 28px;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      opacity: 0;
+      animation: check-kick-draw 0.18s ease 0.25s forwards;
+    }
+
+    @keyframes check-scale {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    @keyframes check-kick-draw {
+      from { width: 0; opacity: 0; }
+      to { width: 11px; opacity: 1; }
+    }
+
+    @keyframes check-stem-draw {
+      from { height: 0; opacity: 0; }
+      to { height: 22px; opacity: 1; }
+    }
+
+    .success-view h3 {
+      font-family: var(--font-family-title);
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .success-view p {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
+  <!-- Settings Drawer Panel -->
+  <div id="settingsPanel" class="settings-panel">
+    <div class="settings-header">
+      <h3>Clipper Settings</h3>
+      <button id="closeSettingsBtn" class="icon-btn" title="Close Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="form-group">
+      <label class="label">Backend API Host</label>
+      <div class="input-with-action">
+        <input type="text" id="apiHostInput" placeholder="http://localhost:4000">
+        <button id="saveSettingsBtn" class="btn btn-sm">Save</button>
+      </div>
+      <span class="helper-text">Configure custom backend address here. Saves to local storage.</span>
+    </div>
+  </div>
+
+  <!-- Header -->
   <div class="header">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-    </svg>
-    <h2>CollabPM Clipper</h2>
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-icon">
+        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+      </svg>
+      <h2>CollabPM Clipper</h2>
+    </div>
+    <div class="header-actions">
+      <!-- Status Badge -->
+      <div id="connectionIndicator" class="status-indicator checking" title="Click to refresh connection">
+        <span class="status-dot"></span>
+        <span id="connectionText">Checking</span>
+      </div>
+      <!-- Settings gear -->
+      <button id="settingsBtn" class="icon-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <div class="form-group">
-    <label class="label">Task Title</label>
-    <input type="text" id="title" placeholder="Loading page title...">
+  <!-- Connection warning banner -->
+  <div id="offlineBanner" class="offline-banner hidden">
+    <span>Backend server is offline.</span>
+    <a id="retryConnectionBtn">Retry</a>
   </div>
 
-  <div class="form-group">
-    <label class="label">Task Description</label>
-    <textarea id="description" placeholder="Selected text will prefill here..."></textarea>
+  <!-- Context Badges -->
+  <div id="contextBadge" class="context-badge">
+    <span class="badge badge-blue">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 2px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+      Page URL
+    </span>
   </div>
 
-  <div class="form-group">
-    <label class="label">Select Board</label>
-    <select id="boardSelect">
-      <option value="">Fetching boards...</option>
-    </select>
+  <!-- Form Content -->
+  <div id="formContent">
+    <div class="form-group">
+      <label class="label">Task Title</label>
+      <div class="input-container">
+        <input type="text" id="title" placeholder="Loading page title..." required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Task Description</label>
+      <div class="input-container">
+        <textarea id="description" placeholder="Selected text will prefill here..."></textarea>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Select Board</label>
+      <div id="boardSelectContainer" class="select-container">
+        <select id="boardSelect">
+          <option value="">Fetching boards...</option>
+        </select>
+        <span class="select-arrow"></span>
+      </div>
+      <div id="boardSkeleton" class="skeleton skeleton-select hidden"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Select Column</label>
+      <div id="listSelectContainer" class="select-container">
+        <select id="listSelect">
+          <option value="">Choose board first...</option>
+        </select>
+        <span class="select-arrow"></span>
+      </div>
+      <div id="listSkeleton" class="skeleton skeleton-select hidden"></div>
+    </div>
+
+    <button id="clipBtn" class="btn" disabled>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+      </svg>
+      Clip to Board
+    </button>
   </div>
 
-  <div class="form-group">
-    <label class="label">Select Column</label>
-    <select id="listSelect">
-      <option value="">Choose board first...</option>
-    </select>
+  <!-- Success Overlay -->
+  <div id="successView" class="success-view hidden">
+    <div class="success-icon-container">
+      <div class="checkmark-circle">
+        <div class="checkmark-stem"></div>
+        <div class="checkmark-kick"></div>
+      </div>
+    </div>
+    <h3>Clipped!</h3>
+    <p>Added to CollabPM Kanban Board</p>
   </div>
 
-  <button id="clipBtn" class="btn" disabled>Clip to Board</button>
-
+  <!-- Toast status message -->
   <div id="statusMsg" class="message"></div>
 
   <script src="popup.js"></script>
